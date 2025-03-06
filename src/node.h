@@ -5,7 +5,7 @@
 #include <memory>
 
 /**
- * @brief Node structure for the Sparse Merkle Tree : Still need to take a look and ifgure out the best way to handle the KV representation at sizes of 256 bits 
+ * @brief Node structure for the Sparse Merkle Tree : Still need to take a look and figure out the best way to handle the KV representation at sizes of 256 bits 
  */
 struct Node {
     ByteVector hash;

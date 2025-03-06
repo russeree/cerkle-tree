@@ -7,7 +7,6 @@
 #include <vector>
 #include <bitset>
 
-// Forward declare the zero hashes array
 extern std::vector<ByteVector> ZERO_HASHES;
 
 template <typename H = Sha256HashFunction>
