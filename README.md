@@ -4,7 +4,7 @@ A fast and efficient C++ implementation of a Sparse Merkle Tree library using Op
 
 ## Overview
 
-Cerkle Tree provides a templated implementation of Sparse Merkle Trees with configurable hash functions. The default implementation uses SHA-256 via OpenSSL.
+Cerkle Tree provides a templated implementation of Sparse Merkle Trees with configurable hash functions. _The default implementation uses SHA-256 via OpenSSL._
 
 ## Dependencies
 
