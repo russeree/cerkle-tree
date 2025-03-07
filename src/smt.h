@@ -193,8 +193,21 @@ public:
         }
 
         ByteVector currentHash = value;
+        return validateProofPath(key, currentHash, proof);
+    }
+
+    bool validateNonInclusionProof(const uint256_t& key, const MerkleProof& proof) const {
+        if (!proof.isValid() || proof.size() != 256) {
+            return false;
+        }
+
+        ByteVector currentHash = getNullHash();
+        return validateProofPath(key, currentHash, proof);
+    }
+
+private:
+    bool validateProofPath(const uint256_t& key, ByteVector currentHash, const MerkleProof& proof) const {
         uint256_t currentKey = key;
-        
         // Reconstruct path from leaf to root
         for (int level = 256; level > 0; level--) {
             ByteVector combined;

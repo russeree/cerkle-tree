@@ -84,8 +84,7 @@ def verify_proof():
         if proof_type == 'inclusion':
             is_valid = smt.validate_proof(key, value, proof)
         else:  # non_inclusion
-            null_hash = smt_bindings.SMT.get_null_hash()
-            is_valid = smt.validate_proof(key, null_hash, proof)
+            is_valid = smt.validate_non_inclusion_proof(key, proof)
             
         return jsonify({'valid': is_valid})
     except Exception as e:

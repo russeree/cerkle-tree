@@ -75,6 +75,11 @@ PYBIND11_MODULE(smt_bindings, m) {
             uint256_t keyInt(key);
             return self.validateProof(keyInt, hexToBytes(value), proof);
         })
+        .def("validate_non_inclusion_proof", [](const SmtContext<>& self, const std::string& key,
+                                              const MerkleProof& proof) {
+            uint256_t keyInt(key);
+            return self.validateNonInclusionProof(keyInt, proof);
+        })
         .def("get_null_hash", []() {
             return bytesToHex(SmtContext<>::getNullHash());
         });
