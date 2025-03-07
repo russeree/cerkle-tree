@@ -2,6 +2,8 @@
 #include "../src/smt.h"
 #include "../src/hash_sha256.h"
 #include "test_utils.h"
+#include <chrono>
+#include <random>
 
 BOOST_AUTO_TEST_SUITE(SmtHashingTests)
 
@@ -87,6 +89,77 @@ BOOST_FIXTURE_TEST_CASE(test_hash_to_string, SmtHashFixture) {
         }
         BOOST_TEST(false);
     }
+}
+
+struct SmtTestHelper {
+    static void logRoot(const std::string& msg, const std::string& root) {
+        BOOST_TEST_MESSAGE(msg + ": " + root.substr(0, 8) + "...");
+    }
+    
+    static ByteVector makeValue(uint8_t v) {
+        return ByteVector{v, v, v};
+    }
+};
+
+BOOST_FIXTURE_TEST_CASE(test_merkle_root_updates, SmtHashFixture) {
+    BOOST_TEST_MESSAGE("\nTesting merkle root consistency");
+    
+    // Set a single leaf and record its root
+    uint256_t pos0 = 0;
+    smt.setLeaf(pos0, SmtTestHelper::makeValue(0x01));
+    std::string singleLeafRoot = smt.getRootHashString();
+    SmtTestHelper::logRoot("Root with single leaf", singleLeafRoot);
+    
+    // Add a second leaf and verify root changes
+    uint256_t pos13371337 = 13371337;
+    smt.setLeaf(pos13371337, SmtTestHelper::makeValue(0x02));
+    std::string twoLeavesRoot = smt.getRootHashString();
+    SmtTestHelper::logRoot("Root with two leaves", twoLeavesRoot);
+    BOOST_TEST(singleLeafRoot != twoLeavesRoot);
+    
+    // Remove second leaf and verify we get original root again
+    smt.removeLeaf(pos13371337);
+    std::string finalRoot = smt.getRootHashString();
+    SmtTestHelper::logRoot("Root after removal", finalRoot);
+    BOOST_TEST(finalRoot == singleLeafRoot);
+}
+
+BOOST_FIXTURE_TEST_CASE(test_merkle_root_batch_update, SmtHashFixture) {
+    const size_t TEST_LEAVES_COUNT = 100000;
+
+    BOOST_TEST_MESSAGE("\nTesting batch update with " + std::to_string(TEST_LEAVES_COUNT) + " leaves");
+    
+    std::vector<std::pair<uint256_t, ByteVector>> updates;
+    updates.reserve(TEST_LEAVES_COUNT);
+    for (size_t i = 0; i < TEST_LEAVES_COUNT; i++) {
+        updates.emplace_back(i, SmtTestHelper::makeValue(i % 256));
+    }
+    
+    // Performance measurement of batch update + Root calculation
+    using Clock = std::chrono::steady_clock;
+    auto start = Clock::now();
+    smt.setBatchLeaves(updates);
+    auto end = Clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    
+    BOOST_TEST_MESSAGE("Final root: " + smt.getRootHashString());
+    BOOST_TEST_MESSAGE("Batch update time: " + std::to_string(duration.count()) + "ms");
+    
+    // Verify leaves at start, middle, and end
+    BOOST_TEST(smt.getLeaf(0) == SmtTestHelper::makeValue(0));
+    BOOST_TEST(smt.getLeaf(TEST_LEAVES_COUNT/2) == SmtTestHelper::makeValue((TEST_LEAVES_COUNT/2) % 256));
+    BOOST_TEST(smt.getLeaf(TEST_LEAVES_COUNT-1) == SmtTestHelper::makeValue((TEST_LEAVES_COUNT-1) % 256));
+    
+    // Remove all leaves and verify we get back to initial state
+    std::vector<uint256_t> removals;
+    removals.reserve(TEST_LEAVES_COUNT);
+    for (size_t i = 0; i < TEST_LEAVES_COUNT; i++) {
+        removals.push_back(i);
+    }
+    smt.removeBatchLeaves(removals);
+    
+    // Verify root matches initial state
+    BOOST_TEST(smt.getRootHashString() == SmtContext<Sha256HashFunction>(defaultValue).getRootHashString());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

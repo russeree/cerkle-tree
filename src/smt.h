@@ -3,23 +3,14 @@
 
 #include "hash_function.h"
 #include "hash_sha256.h"
+#include "proof.h"
 #include <iostream>
 #include <vector>
 #include <bitset>
-#include <unordered_map>
+#include <map>
 #include <boost/multiprecision/cpp_int.hpp>
 
 using uint256_t = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<256, 256, boost::multiprecision::unsigned_magnitude, boost::multiprecision::unchecked, void>>;
-
-// Custom hash function for uint256_t to be used in unordered_map
-namespace std {
-    template <>
-    struct hash<uint256_t> {
-        size_t operator()(const uint256_t& x) const {
-            return static_cast<size_t>(x & std::numeric_limits<size_t>::max());
-        }
-    };
-}
 
 extern std::vector<ByteVector> ZERO_HASHES;
 
@@ -58,8 +49,52 @@ public:
      * @param value The hash value to store at this leaf
      */
     void setLeaf(const uint256_t& key, const ByteVector& value) {
-        leaves_[key] = value;
-        // !!!FIXME!!! Needs to add in the Update Function
+        setLeafNoUpdate(key, value);
+        updateMerkleRoot(key);
+    }
+
+    /**
+     * @brief Set multiple leaves in a batch, updating the root only once
+     * 
+     * @param updates Vector of key-value pairs to update
+     */
+    void setBatchLeaves(const std::vector<std::pair<uint256_t, ByteVector>>& updates) {
+        if (updates.empty()) return;
+        
+        // Apply all updates without recalculating root
+        for (const auto& [key, value] : updates) {
+            setLeafNoUpdate(key, value);
+        }
+        
+        // Update root once at the end
+        updateMerkleRoot(updates.back().first);
+    }
+
+    /**
+     * @brief Remove a leaf from the tree
+     * 
+     * @param key The 256-bit key of the leaf to remove
+     */
+    void removeLeaf(const uint256_t& key) {
+        leaves_.erase(key);
+        updateMerkleRoot(key);
+    }
+
+    /**
+     * @brief Remove multiple leaves in a batch
+     * 
+     * @param keys Vector of keys to remove
+     */
+    void removeBatchLeaves(const std::vector<uint256_t>& keys) {
+        if (keys.empty()) return;
+        
+        // Remove all leaves without recalculating root
+        for (const auto& key : keys) {
+            leaves_.erase(key);
+        }
+        
+        // Update root once at the end
+        updateMerkleRoot(keys.back());
     }
 
     /**
@@ -105,28 +140,147 @@ public:
         return isLeft(key) ? (key | 1) : (key & ~uint256_t(1));
     }
 
+
+    MerkleProof generateProof(const uint256_t& key) const {
+        MerkleProof proof;
+        uint256_t currentKey = key;
+        
+        // Collect sibling hashes from leaf to root
+        for (int level = 256; level > 0; level--) {
+            uint256_t siblingKey = getPairedNode(currentKey);
+            ByteVector siblingHash;
+            
+            // Get sibling's hash (either from tree or zero hash)
+            uint256_t siblingSubtreeStart = siblingKey << (256 - level);
+            uint256_t siblingSubtreeEnd = (siblingKey + 1) << (256 - level);
+            auto it = leaves_.lower_bound(siblingSubtreeStart);
+            if (it != leaves_.end() && it->first < siblingSubtreeEnd) {
+                siblingHash = calculateNodeHash(siblingKey, level);
+            } else {
+                siblingHash = ZERO_HASHES[level];
+            }
+            
+            proof.addSibling(siblingHash);
+            currentKey >>= 1;
+        }
+        
+        return proof;
+    }
+    
+    bool validateProof(const uint256_t& key, const ByteVector& value, const MerkleProof& proof) const {
+        if (!proof.isValid() || proof.size() != 256) {
+            return false;
+        }
+
+        ByteVector currentHash = value;
+        uint256_t currentKey = key;
+        
+        // Reconstruct path from leaf to root
+        for (int level = 256; level > 0; level--) {
+            ByteVector combined;
+            if (isLeft(currentKey)) {
+                combined.insert(combined.end(), currentHash.begin(), currentHash.end());
+                combined.insert(combined.end(), proof.getSibling(256-level).begin(), proof.getSibling(256-level).end());
+            } else {
+                combined.insert(combined.end(), proof.getSibling(256-level).begin(), proof.getSibling(256-level).end());
+                combined.insert(combined.end(), currentHash.begin(), currentHash.end());
+            }
+            
+            currentHash = hashFunction_.hash(combined);
+            currentKey >>= 1;
+        }
+        
+        // For empty tree or when all leaves have default values, compare against ZERO_HASHES[256]
+        return currentHash == (leaves_.empty() ? ZERO_HASHES[256] : root_);
+    }
+
 private:
+    void setLeafNoUpdate(const uint256_t& key, const ByteVector& value) {
+        if (value == defaultValue_) {
+            leaves_.erase(key);
+        } else {
+            leaves_[key] = value;
+        }
+    }
+
     ByteVector defaultValue_;
     ByteVector root_;
     H hashFunction_;
-    std::unordered_map<uint256_t, ByteVector> leaves_;
+    std::map<uint256_t, ByteVector> leaves_;
     
     void initializeZeroHashes() {
         ZERO_HASHES.resize(257);
+
         // We are going to use the null hashes to represent empties.
         ZERO_HASHES[0] = hashFunction_.hash(ByteVector());
-        
-        std::cout << "Initializing Zero Hashes:\n";
-        std::cout << "Level 0 (Null Hash): " << H::hashToString(ZERO_HASHES[0]) << "\n";
         
         for (size_t i = 1; i <= 256; i++) {
             ByteVector combined;
             combined.insert(combined.end(), ZERO_HASHES[i-1].begin(), ZERO_HASHES[i-1].end());
             combined.insert(combined.end(), ZERO_HASHES[i-1].begin(), ZERO_HASHES[i-1].end());
             ZERO_HASHES[i] = hashFunction_.hash(combined);
-            
-            std::cout << "Level " << i << ": " << H::hashToString(ZERO_HASHES[i]) << "\n";
         }
+    }
+
+    /**
+     * @brief Calculate the hash for a node at a given level
+     * 
+     * @param key The node's key
+     * @param level The level in the tree (0 to 256)
+     * @return ByteVector The hash for this node
+     */
+    ByteVector calculateNodeHash(uint256_t key, int level) const {
+        if (level == 256) {
+            return getLeaf(key);
+        }
+
+        // Get left and right child keys
+        uint256_t leftKey = key << 1;
+        uint256_t rightKey = (key << 1) | 1;
+        
+        // Get left child hash
+        ByteVector leftHash;
+        uint256_t leftSubtreeStart = leftKey << (256 - (level + 1));
+        uint256_t leftSubtreeEnd = (leftKey + 1) << (256 - (level + 1));
+        auto leftIt = leaves_.lower_bound(leftSubtreeStart);
+        if (leftIt != leaves_.end() && leftIt->first < leftSubtreeEnd) {
+            leftHash = calculateNodeHash(leftKey, level + 1);
+        } else {
+            leftHash = ZERO_HASHES[level + 1];
+        }
+        
+        // Get right child hash
+        ByteVector rightHash;
+        uint256_t rightSubtreeStart = rightKey << (256 - (level + 1));
+        uint256_t rightSubtreeEnd = (rightKey + 1) << (256 - (level + 1));
+        auto rightIt = leaves_.lower_bound(rightSubtreeStart);
+        if (rightIt != leaves_.end() && rightIt->first < rightSubtreeEnd) {
+            rightHash = calculateNodeHash(rightKey, level + 1);
+        } else {
+            rightHash = ZERO_HASHES[level + 1];
+        }
+        
+        // Combine and hash
+        ByteVector combined;
+        combined.insert(combined.end(), leftHash.begin(), leftHash.end());
+        combined.insert(combined.end(), rightHash.begin(), rightHash.end());
+        return hashFunction_.hash(combined);
+    }
+
+    /**
+     * @brief Update the merkle root after a leaf change
+     * 
+     * @param key The 256-bit key of the modified leaf
+     */
+    void updateMerkleRoot(uint256_t) {
+        // If tree is empty after updates, use the initial root
+        if (leaves_.empty()) {
+            root_ = ZERO_HASHES[256];
+            return;
+        }
+        
+        // Otherwise calculate root from remaining leaves
+        root_ = calculateNodeHash(0, 0);
     }
 };
 

@@ -11,6 +11,7 @@ find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 add_library(${PROJECT_NAME}
     src/hash_function.cpp
     src/hash_sha256.cpp
+    src/proof.cpp
     src/smt.cpp
 )
 
@@ -28,6 +29,7 @@ add_executable(${PROJECT_NAME}_test
     tests/test_smt_initialization.cpp
     tests/test_smt_hashing.cpp
     tests/test_smt_nodes.cpp
+    tests/test_smt_proofs.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_test 
