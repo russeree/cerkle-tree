@@ -12,7 +12,6 @@ add_library(${PROJECT_NAME}
     src/hash_function.cpp
     src/hash_sha256.cpp
     src/proof.cpp
-    src/smt.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

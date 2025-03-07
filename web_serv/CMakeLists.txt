@@ -26,7 +26,6 @@ add_library(smt_impl
     ../src/hash_function.cpp
     ../src/hash_sha256.cpp
     ../src/proof.cpp
-    ../src/node.cpp
     src/globals.cpp
 )
 set_property(TARGET smt_impl PROPERTY POSITION_INDEPENDENT_CODE ON)

@@ -12,11 +12,19 @@
 
 using uint256_t = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<256, 256, boost::multiprecision::unsigned_magnitude, boost::multiprecision::unchecked, void>>;
 
-extern std::vector<ByteVector> ZERO_HASHES;
-
 template <typename H = Sha256HashFunction>
 class SmtContext {
+private:
+    static std::vector<ByteVector> ZERO_HASHES;
+    static bool ZERO_HASHES_INITIALIZED;
 public:
+    static const ByteVector& getZeroHash(size_t level) {
+        if (!ZERO_HASHES_INITIALIZED) {
+            SmtContext<H> temp;  // This will initialize ZERO_HASHES
+        }
+        return ZERO_HASHES[level];
+    }
+
     /**
      * @brief Construct a new SmtContext object
      * 
@@ -25,8 +33,9 @@ public:
     SmtContext(const H& hashFunction = H())
         : defaultValue_(), hashFunction_(hashFunction) {
         
-        if (ZERO_HASHES.empty()) {
+        if (!ZERO_HASHES_INITIALIZED) {
             initializeZeroHashes();
+            ZERO_HASHES_INITIALIZED = true;
         }
         
         root_ = ZERO_HASHES[256];
@@ -282,5 +291,11 @@ private:
         root_ = calculateNodeHash(0, 0);
     }
 };
+
+template <typename H>
+std::vector<ByteVector> SmtContext<H>::ZERO_HASHES;
+
+template <typename H>
+bool SmtContext<H>::ZERO_HASHES_INITIALIZED = false;
 
 #endif // SMT_H

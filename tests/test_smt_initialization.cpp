@@ -17,7 +17,7 @@ BOOST_FIXTURE_TEST_CASE(test_basic_initialization, SmtInitFixture) {
 
 BOOST_FIXTURE_TEST_CASE(test_root_hash, SmtInitFixture) {
     BOOST_TEST_MESSAGE("Testing root hash initialization");
-    BOOST_TEST(smt.getRootHash() == ZERO_HASHES[256]);
+    BOOST_TEST(smt.getRootHash() == SmtContext<Sha256HashFunction>::getZeroHash(256));
     
     // Printing Tests
     std::string rootHashString = smt.getRootHashString();
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(test_default_initialization) {
     SmtContext<Sha256HashFunction> smt(hashFunc);
     
     BOOST_TEST(smt.getRootHash().size() == 32);
-    BOOST_TEST(smt.getRootHash() == ZERO_HASHES[256]);
+    BOOST_TEST(smt.getRootHash() == SmtContext<Sha256HashFunction>::getZeroHash(256));
     
     std::string rootHashString = smt.getRootHashString();
     BOOST_TEST(!rootHashString.empty());
