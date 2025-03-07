@@ -20,11 +20,10 @@ public:
     /**
      * @brief Construct a new SmtContext object
      * 
-     * @param defaultValue The default value for empty leaves
      * @param hashFunction The hash function to use (default constructed if not provided)
      */
-    SmtContext(const ByteVector& defaultValue, const H& hashFunction = H())
-        : defaultValue_(defaultValue), hashFunction_(hashFunction) {
+    SmtContext(const H& hashFunction = H())
+        : defaultValue_(), hashFunction_(hashFunction) {
         
         if (ZERO_HASHES.empty()) {
             initializeZeroHashes();

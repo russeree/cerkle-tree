@@ -6,9 +6,8 @@
 BOOST_AUTO_TEST_SUITE(SmtNodeTests)
 
 struct SmtNodeFixture {
-    ByteVector defaultValue{0x00};
     Sha256HashFunction hashFunction;
-    SmtContext<Sha256HashFunction> smt{defaultValue, hashFunction};
+    SmtContext<Sha256HashFunction> smt{hashFunction};
     
     // Helper function to create test values
     ByteVector createTestValue(uint8_t val) {
@@ -33,7 +32,7 @@ BOOST_FIXTURE_TEST_CASE(test_leaf_operations, SmtNodeFixture) {
     
     BOOST_TEST(smt.getLeaf(key1) == value1);
     BOOST_TEST(smt.getLeaf(key2) == value2);
-    BOOST_TEST(smt.getLeaf(uint256_t(2)) == defaultValue);
+    BOOST_TEST(smt.getLeaf(uint256_t(2)) == ByteVector());
 }
 
 BOOST_FIXTURE_TEST_CASE(test_node_position, SmtNodeFixture) {

@@ -6,9 +6,8 @@
 BOOST_AUTO_TEST_SUITE(SmtInitializationTests)
 
 struct SmtInitFixture {
-    ByteVector defaultValue{0x00};
     Sha256HashFunction hashFunction;
-    SmtContext<Sha256HashFunction> smt{defaultValue, hashFunction};
+    SmtContext<Sha256HashFunction> smt{hashFunction};
 };
 
 BOOST_FIXTURE_TEST_CASE(test_basic_initialization, SmtInitFixture) {
@@ -26,11 +25,10 @@ BOOST_FIXTURE_TEST_CASE(test_root_hash, SmtInitFixture) {
     BOOST_TEST(rootHashString.length() == 64); // 32 Bytes Hex = 64 Characters
 }
 
-BOOST_AUTO_TEST_CASE(test_string_default_value) {
-    BOOST_TEST_MESSAGE("Testing initialization with string default value");
-    ByteVector defaultValue = stringToByteVector("empty");
+BOOST_AUTO_TEST_CASE(test_default_initialization) {
+    BOOST_TEST_MESSAGE("Testing initialization with default empty value");
     Sha256HashFunction hashFunc;
-    SmtContext<Sha256HashFunction> smt(defaultValue, hashFunc);
+    SmtContext<Sha256HashFunction> smt(hashFunc);
     
     BOOST_TEST(smt.getRootHash().size() == 32);
     BOOST_TEST(smt.getRootHash() == ZERO_HASHES[256]);

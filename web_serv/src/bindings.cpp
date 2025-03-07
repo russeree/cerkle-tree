@@ -44,8 +44,8 @@ PYBIND11_MODULE(smt_bindings, m) {
         .def("size", &MerkleProof::size);
 
     py::class_<SmtContext<>>(m, "SMT")
-        .def(py::init([](const std::string& defaultValue) {
-            return new SmtContext<>(hexToBytes(defaultValue));
+        .def(py::init([]() {
+            return new SmtContext<>();
         }))
         .def("get_root_hash", [](const SmtContext<>& self) {
             return bytesToHex(self.getRootHash());

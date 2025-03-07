@@ -8,9 +8,8 @@
 BOOST_AUTO_TEST_SUITE(SmtHashingTests)
 
 struct SmtHashFixture {
-    ByteVector defaultValue{0x00};
     Sha256HashFunction hashFunction;
-    SmtContext<Sha256HashFunction> smt{defaultValue, hashFunction};
+    SmtContext<Sha256HashFunction> smt{hashFunction};
 };
 
 BOOST_FIXTURE_TEST_CASE(test_zero_hashes, SmtHashFixture) {
@@ -159,7 +158,7 @@ BOOST_FIXTURE_TEST_CASE(test_merkle_root_batch_update, SmtHashFixture) {
     smt.removeBatchLeaves(removals);
     
     // Verify root matches initial state
-    BOOST_TEST(smt.getRootHashString() == SmtContext<Sha256HashFunction>(defaultValue).getRootHashString());
+    BOOST_TEST(smt.getRootHashString() == SmtContext<Sha256HashFunction>().getRootHashString());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

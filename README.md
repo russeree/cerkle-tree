@@ -40,10 +40,9 @@ ctest --output-on-failure
 #include "smt.h"
 #include "hash_sha256.h"
 
-// Create a new SMT context with a default value
-ByteVector defaultValue{0x00};
+// Create a new SMT context (uses empty ByteVector as default value)
 Sha256HashFunction hashFunc;
-SmtContext<Sha256HashFunction> smt(defaultValue, hashFunc);
+SmtContext<Sha256HashFunction> smt(hashFunc);
 
 // Get the root hash
 ByteVector rootHash = smt.getRootHash();

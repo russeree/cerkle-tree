@@ -6,9 +6,8 @@
 BOOST_AUTO_TEST_SUITE(SmtProofTests)
 
 struct SmtProofFixture {
-    ByteVector defaultValue{0x00};
     Sha256HashFunction hashFunction;
-    SmtContext<Sha256HashFunction> smt{defaultValue, hashFunction};
+    SmtContext<Sha256HashFunction> smt{hashFunction};
 };
 
 BOOST_FIXTURE_TEST_CASE(test_proof_single_item, SmtProofFixture) {
