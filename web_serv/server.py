@@ -4,8 +4,8 @@ import json
 
 app = Flask(__name__)
 
-# Initialize SMT with empty default value
-smt = smt_bindings.SMT("0" * 64)  # 32 bytes of zeros in hex
+# Initialize SMT with hash of empty byte array as default value
+smt = smt_bindings.SMT("")  # SHA256("")
 
 @app.route('/')
 def index():

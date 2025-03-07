@@ -3,12 +3,29 @@
 <head>
     <title>SMT Playground</title>
     <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --panel-bg: white;
+            --text-color: #333;
+            --border-color: #ddd;
+            --code-bg: #f8f9fa;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --panel-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --code-bg: #363636;
+        }
+
         body {
             font-family: Arial, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
         .container {
             display: grid;
@@ -16,29 +33,72 @@
             gap: 20px;
         }
         .panel {
-            background: white;
+            background: var(--panel-bg);
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .header {
             margin-bottom: 30px;
             text-align: center;
         }
         .root-hash {
-            background: #f8f9fa;
+            background: var(--code-bg);
             padding: 10px;
             border-radius: 4px;
             font-family: monospace;
             word-break: break-all;
+            position: relative;
         }
-        input[type="text"] {
+
+        .proof-output {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--code-bg);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-color);
+        }
+
+        .copy-btn:hover {
+            background: var(--code-bg);
+        }
+
+        .theme-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        input[type="text"], textarea {
             width: 100%;
             padding: 8px;
             margin: 5px 0;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             box-sizing: border-box;
+            background: var(--code-bg);
+            color: var(--text-color);
         }
         button {
             background-color: #007bff;
@@ -55,10 +115,11 @@
         .result {
             margin-top: 10px;
             padding: 10px;
-            background: #f8f9fa;
+            background: var(--code-bg);
             border-radius: 4px;
             font-family: monospace;
             word-break: break-all;
+            position: relative;
         }
         .error {
             color: #dc3545;
@@ -66,12 +127,16 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
+    <button class="theme-switch" onclick="toggleTheme()">Toggle Dark Mode</button>
     <div class="header">
         <h1>Sparse Merkle Tree Playground</h1>
         <div>
             <h3>Current Root Hash:</h3>
-            <div id="rootHash" class="root-hash">Loading...</div>
+            <div class="root-hash">
+                <button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
+                <div class="proof-output" id="rootHash">Loading...</div>
+            </div>
         </div>
     </div>
 
@@ -144,7 +209,9 @@
                 if (data.error) {
                     document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
                 } else {
-                    document.getElementById('leafResult').innerHTML = `Success! New root: ${data.root}`;
+                    document.getElementById('leafResult').innerHTML = 
+                        `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
+                         <div class="proof-output">Success! New root: ${data.root}</div>`;
                     updateRootHash();
                 }
             });
@@ -160,7 +227,8 @@
                         document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
                     } else {
                         document.getElementById('leafResult').innerHTML = 
-                            `Value: ${data.value}<br>Exists: ${data.exists}`;
+                            `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
+                             <div class="proof-output">Value: ${data.value}<br>Exists: ${data.exists}</div>`;
                     }
                 });
         }
@@ -174,7 +242,9 @@
                     if (data.error) {
                         document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
                     } else {
-                        document.getElementById('leafResult').innerHTML = `Success! New root: ${data.root}`;
+                        document.getElementById('leafResult').innerHTML = 
+                            `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
+                             <div class="proof-output">Success! New root: ${data.root}</div>`;
                         updateRootHash();
                     }
                 });
@@ -189,8 +259,10 @@
                     if (data.error) {
                         document.getElementById('proofResult').innerHTML = `Error: ${data.error}`;
                     } else {
+                        const proofContent = `Valid: ${data.valid}<br>Siblings:<br>${data.siblings.join('<br>')}`;
                         document.getElementById('proofResult').innerHTML = 
-                            `Valid: ${data.valid}<br>Siblings:<br>${data.siblings.join('<br>')}`;
+                            `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
+                             <div class="proof-output">${proofContent}</div>`;
                     }
                 });
         }
@@ -214,9 +286,26 @@
                 if (data.error) {
                     document.getElementById('verifyResult').innerHTML = `Error: ${data.error}`;
                 } else {
-                    document.getElementById('verifyResult').innerHTML = `Proof is ${data.valid ? 'valid' : 'invalid'}`;
+                    document.getElementById('verifyResult').innerHTML = 
+                        `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
+                         <div class="proof-output">Proof is ${data.valid ? 'valid' : 'invalid'}</div>`;
                 }
             });
+        }
+        function copyToClipboard(element) {
+            const content = element.querySelector('.proof-output').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                const btn = element.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
         }
     </script>
 </body>
