@@ -6,6 +6,20 @@
 #include <iostream>
 #include <vector>
 #include <bitset>
+#include <unordered_map>
+#include <boost/multiprecision/cpp_int.hpp>
+
+using uint256_t = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<256, 256, boost::multiprecision::unsigned_magnitude, boost::multiprecision::unchecked, void>>;
+
+// Custom hash function for uint256_t to be used in unordered_map
+namespace std {
+    template <>
+    struct hash<uint256_t> {
+        size_t operator()(const uint256_t& x) const {
+            return static_cast<size_t>(x & std::numeric_limits<size_t>::max());
+        }
+    };
+}
 
 extern std::vector<ByteVector> ZERO_HASHES;
 
@@ -20,12 +34,11 @@ public:
      */
     SmtContext(const ByteVector& defaultValue, const H& hashFunction = H())
         : defaultValue_(defaultValue), hashFunction_(hashFunction) {
-        // Initialize zero hashes if not already initialized
+        
         if (ZERO_HASHES.empty()) {
             initializeZeroHashes();
         }
         
-        // Initialize the root with the zero hash at depth 256
         root_ = ZERO_HASHES[256];
     }
     
@@ -38,10 +51,65 @@ public:
         return H::hashToString(root_);
     }
 
+    /**
+     * @brief Set a leaf value in the tree
+     * 
+     * @param key The 256-bit key for the leaf position
+     * @param value The hash value to store at this leaf
+     */
+    void setLeaf(const uint256_t& key, const ByteVector& value) {
+        leaves_[key] = value;
+        // !!!FIXME!!! Needs to add in the Update Function
+    }
+
+    /**
+     * @brief Get a leaf value from the tree
+     * 
+     * @param key The 256-bit key for the leaf position
+     * @return ByteVector The stored hash value, or defaultValue_ if not found
+     */
+    ByteVector getLeaf(const uint256_t& key) const {
+        auto it = leaves_.find(key);
+        return (it != leaves_.end()) ? it->second : defaultValue_;
+    }
+
+    /**
+     * @brief Check if a leaf exists in the tree
+     * 
+     * @param key The 256-bit key to check
+     * @return true if the leaf exists, false otherwise
+     */
+    bool hasLeaf(const uint256_t& key) const {
+        return leaves_.find(key) != leaves_.end();
+    }
+
+    /**
+     * @brief Check if a node is a left node (last bit is 0)
+     * 
+     * @param key The 256-bit key to check
+     * @return true if the node is a left node (last bit is 0), false otherwise
+     */
+    bool isLeft(const uint256_t& key) const {
+        return (key & 1) == 0;
+    }
+
+    /**
+     * @brief Get the paired node's key by flipping the last bit
+     * Left (last bit 0), returns right pair (last bit 1)
+     * Right (last bit 1), returns left pair (last bit 0)
+     * 
+     * @param key The 256-bit key to get the pair for
+     * @return uint256_t The key of the paired node
+     */
+    uint256_t getPairedNode(const uint256_t& key) const {
+        return isLeft(key) ? (key | 1) : (key & ~uint256_t(1));
+    }
+
 private:
     ByteVector defaultValue_;
     ByteVector root_;
     H hashFunction_;
+    std::unordered_map<uint256_t, ByteVector> leaves_;
     
     void initializeZeroHashes() {
         ZERO_HASHES.resize(257);

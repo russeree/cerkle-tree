@@ -25,6 +25,9 @@ enable_testing()
 add_executable(${PROJECT_NAME}_test
     tests/test_main.cpp
     tests/test_smt.cpp
+    tests/test_smt_initialization.cpp
+    tests/test_smt_hashing.cpp
+    tests/test_smt_nodes.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_test 
@@ -33,4 +36,11 @@ target_link_libraries(${PROJECT_NAME}_test
     Boost::unit_test_framework
 )
 
-add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
+add_test(
+    NAME ${PROJECT_NAME}_test 
+    COMMAND ${PROJECT_NAME}_test 
+        --log_level=all 
+        --report_level=detailed 
+        --color_output=yes 
+        --show_progress=yes
+)
