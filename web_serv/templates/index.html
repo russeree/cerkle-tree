@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SMT Playground</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .root-hash {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sparse Merkle Tree Playground</h1>
+        <div>
+            <h3>Current Root Hash:</h3>
+            <div id="rootHash" class="root-hash">Loading...</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Set/Get Leaf</h2>
+            <div>
+                <label>Key (hex):</label>
+                <input type="text" id="leafKey" placeholder="Enter 256-bit key in hex">
+                <label>Value (hex):</label>
+                <input type="text" id="leafValue" placeholder="Enter 32-byte value in hex">
+                <button onclick="setLeaf()">Set Leaf</button>
+                <button onclick="getLeaf()">Get Leaf</button>
+                <button onclick="removeLeaf()">Remove Leaf</button>
+                <div id="leafResult" class="result"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Generate Proof</h2>
+            <div>
+                <label>Key (hex):</label>
+                <input type="text" id="proofKey" placeholder="Enter 256-bit key in hex">
+                <button onclick="generateProof()">Generate Proof</button>
+                <div id="proofResult" class="result"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Verify Proof</h2>
+            <div>
+                <label>Key (hex):</label>
+                <input type="text" id="verifyKey" placeholder="Enter 256-bit key in hex">
+                <label>Value (hex):</label>
+                <input type="text" id="verifyValue" placeholder="Enter 32-byte value in hex">
+                <label>Siblings (hex, one per line):</label>
+                <textarea id="verifySiblings" rows="5" style="width: 100%; margin: 5px 0;"></textarea>
+                <button onclick="verifyProof()">Verify Proof</button>
+                <div id="verifyResult" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update root hash periodically
+        function updateRootHash() {
+            fetch('/api/root')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('rootHash').textContent = data.root;
+                });
+        }
+        
+        setInterval(updateRootHash, 2000);
+        updateRootHash();
+
+        function setLeaf() {
+            const key = document.getElementById('leafKey').value;
+            const value = document.getElementById('leafValue').value;
+            
+            fetch('/api/leaf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ key, value }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
+                } else {
+                    document.getElementById('leafResult').innerHTML = `Success! New root: ${data.root}`;
+                    updateRootHash();
+                }
+            });
+        }
+
+        function getLeaf() {
+            const key = document.getElementById('leafKey').value;
+            
+            fetch(`/api/leaf?key=${key}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
+                    } else {
+                        document.getElementById('leafResult').innerHTML = 
+                            `Value: ${data.value}<br>Exists: ${data.exists}`;
+                    }
+                });
+        }
+
+        function removeLeaf() {
+            const key = document.getElementById('leafKey').value;
+            
+            fetch(`/api/leaf?key=${key}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
+                    } else {
+                        document.getElementById('leafResult').innerHTML = `Success! New root: ${data.root}`;
+                        updateRootHash();
+                    }
+                });
+        }
+
+        function generateProof() {
+            const key = document.getElementById('proofKey').value;
+            
+            fetch(`/api/proof?key=${key}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('proofResult').innerHTML = `Error: ${data.error}`;
+                    } else {
+                        document.getElementById('proofResult').innerHTML = 
+                            `Valid: ${data.valid}<br>Siblings:<br>${data.siblings.join('<br>')}`;
+                    }
+                });
+        }
+
+        function verifyProof() {
+            const key = document.getElementById('verifyKey').value;
+            const value = document.getElementById('verifyValue').value;
+            const siblings = document.getElementById('verifySiblings').value
+                .split('\n')
+                .filter(s => s.trim());
+            
+            fetch('/api/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ key, value, siblings }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('verifyResult').innerHTML = `Error: ${data.error}`;
+                } else {
+                    document.getElementById('verifyResult').innerHTML = `Proof is ${data.valid ? 'valid' : 'invalid'}`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

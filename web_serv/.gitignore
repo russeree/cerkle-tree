@@ -1,0 +1,13 @@
+# Python bindings
+smt_bindings*.so
+
+# Build directory
+build/
+
+# Python virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
