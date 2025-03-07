@@ -21,11 +21,7 @@ BOOST_FIXTURE_TEST_CASE(test_empty_tree_non_inclusion_proof, SmtNonInclusionProo
     // Verify the proof is valid
     BOOST_TEST(proof.isValid());
     BOOST_TEST(proof.size() == 256);
-    
-    // Verify it's a valid non-inclusion proof
     BOOST_TEST(smt.validateNonInclusionProof(key, proof));
-    
-    // Verify the root is the expected empty tree root
     BOOST_TEST(smt.getRootHash() == SmtContext<>::getZeroHash(256));
 }
 
