@@ -54,23 +54,6 @@ public:
     }
 
     /**
-     * @brief Set multiple leaves in a batch, updating the root only once
-     * 
-     * @param updates Vector of key-value pairs to update
-     */
-    void setBatchLeaves(const std::vector<std::pair<uint256_t, ByteVector>>& updates) {
-        if (updates.empty()) return;
-        
-        // Apply all updates without recalculating root
-        for (const auto& [key, value] : updates) {
-            setLeafNoUpdate(key, value);
-        }
-        
-        // Update root once at the end
-        updateMerkleRoot(updates.back().first);
-    }
-
-    /**
      * @brief Remove a leaf from the tree
      * 
      * @param key The 256-bit key of the leaf to remove
@@ -81,19 +64,28 @@ public:
     }
 
     /**
+     * @brief Set multiple leaves in a batch, updating the root only once
+     * 
+     * @param updates Vector of key-value pairs to update
+     */
+    void setBatchLeaves(const std::vector<std::pair<uint256_t, ByteVector>>& updates) {
+        if (updates.empty()) return;
+        for (const auto& [key, value] : updates) {
+            setLeafNoUpdate(key, value);
+        }
+        updateMerkleRoot(updates.back().first);
+    }
+
+    /**
      * @brief Remove multiple leaves in a batch
      * 
      * @param keys Vector of keys to remove
      */
     void removeBatchLeaves(const std::vector<uint256_t>& keys) {
         if (keys.empty()) return;
-        
-        // Remove all leaves without recalculating root
         for (const auto& key : keys) {
             leaves_.erase(key);
         }
-        
-        // Update root once at the end
         updateMerkleRoot(keys.back());
     }
 
@@ -166,7 +158,15 @@ public:
         
         return proof;
     }
-    
+
+    /**
+     * @brief Clear all leaves from the tree and update the root
+     */
+    void clearLeaves() {
+        leaves_.clear();
+        root_ = ZERO_HASHES[256];
+    }
+
     bool validateProof(const uint256_t& key, const ByteVector& value, const MerkleProof& proof) const {
         if (!proof.isValid() || proof.size() != 256) {
             return false;
@@ -195,6 +195,11 @@ public:
     }
 
 private:
+    ByteVector defaultValue_;
+    ByteVector root_;
+    H hashFunction_;
+    std::map<uint256_t, ByteVector> leaves_;
+
     void setLeafNoUpdate(const uint256_t& key, const ByteVector& value) {
         if (value == defaultValue_) {
             leaves_.erase(key);
@@ -202,11 +207,6 @@ private:
             leaves_[key] = value;
         }
     }
-
-    ByteVector defaultValue_;
-    ByteVector root_;
-    H hashFunction_;
-    std::map<uint256_t, ByteVector> leaves_;
     
     void initializeZeroHashes() {
         ZERO_HASHES.resize(257);
