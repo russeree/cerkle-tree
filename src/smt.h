@@ -26,6 +26,18 @@ public:
     }
 
     /**
+     * @brief Get the null hash (hash of empty byte array) used for non-inclusion proofs
+     * 
+     * @return ByteVector The null hash
+     */
+    static const ByteVector& getNullHash() {
+        if (!ZERO_HASHES_INITIALIZED) {
+            SmtContext<H> temp;  // This will initialize ZERO_HASHES
+        }
+        return ZERO_HASHES[0];
+    }
+
+    /**
      * @brief Construct a new SmtContext object
      * 
      * @param hashFunction The hash function to use (default constructed if not provided)

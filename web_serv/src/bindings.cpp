@@ -74,5 +74,8 @@ PYBIND11_MODULE(smt_bindings, m) {
                                  const std::string& value, const MerkleProof& proof) {
             uint256_t keyInt(key);
             return self.validateProof(keyInt, hexToBytes(value), proof);
+        })
+        .def("get_null_hash", []() {
+            return bytesToHex(SmtContext<>::getNullHash());
         });
 }

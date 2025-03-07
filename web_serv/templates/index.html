@@ -42,13 +42,60 @@
             margin-bottom: 30px;
             text-align: center;
         }
-        .root-hash {
+
+        .hash-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        .hash-section {
+            padding: 20px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .hash-section.with-button {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hash-section h3 {
+            margin: 0 0 15px 0;
+            color: #007bff;
+            font-size: 1.2em;
+        }
+
+        .hash-value {
             background: var(--code-bg);
-            padding: 10px;
-            border-radius: 4px;
+            padding: 15px;
+            border-radius: 8px;
             font-family: monospace;
             word-break: break-all;
-            position: relative;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .reset-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+        }
+
+        .reset-button:hover {
+            background-color: #c82333;
         }
 
         .proof-output {
@@ -59,13 +106,17 @@
             border-radius: 4px;
             font-family: monospace;
             word-break: break-all;
+            word-wrap: break-word;
             position: relative;
+            margin-top: 30px;
+            white-space: pre-wrap;
+            max-width: 100%;
         }
 
         .copy-btn {
             position: absolute;
-            top: 5px;
-            right: 5px;
+            top: -25px;
+            right: 0;
             background: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -73,6 +124,7 @@
             cursor: pointer;
             font-size: 12px;
             color: var(--text-color);
+            z-index: 1;
         }
 
         .copy-btn:hover {
@@ -90,6 +142,7 @@
             cursor: pointer;
             color: var(--text-color);
         }
+
         input[type="text"], textarea {
             width: 100%;
             padding: 8px;
@@ -100,6 +153,7 @@
             background: var(--code-bg);
             color: var(--text-color);
         }
+
         button {
             background-color: #007bff;
             color: white;
@@ -109,9 +163,11 @@
             cursor: pointer;
             margin-top: 10px;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         .result {
             margin-top: 10px;
             padding: 10px;
@@ -119,11 +175,68 @@
             border-radius: 4px;
             font-family: monospace;
             word-break: break-all;
+            word-wrap: break-word;
             position: relative;
+            max-width: 100%;
         }
+
         .error {
             color: #dc3545;
             margin-top: 10px;
+        }
+
+        .hash-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .hash-square {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .hash-square:hover {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .hash-text {
+            font-family: monospace;
+            white-space: pre;
+        }
+
+        .proof-history {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .history-square {
+            width: 100%;
+            padding-bottom: 100%;
+            border-radius: 4px;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .history-square:hover {
+            transform: scale(1.2);
+            z-index: 1;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -131,11 +244,17 @@
     <button class="theme-switch" onclick="toggleTheme()">Toggle Dark Mode</button>
     <div class="header">
         <h1>Sparse Merkle Tree Playground</h1>
-        <div>
-            <h3>Current Root Hash:</h3>
-            <div class="root-hash">
-                <button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
-                <div class="proof-output" id="rootHash">Loading...</div>
+        <div class="hash-container">
+            <div class="hash-section with-button">
+                <div>
+                    <h3>Current Root Hash</h3>
+                    <div class="hash-value" id="rootHash">Loading...</div>
+                </div>
+                <button class="reset-button" onclick="resetTree()">Reset Tree</button>
+            </div>
+            <div class="hash-section">
+                <h3>Null Hash (for non-inclusion proofs)</h3>
+                <div class="hash-value" id="nullHash">Loading...</div>
             </div>
         </div>
     </div>
@@ -168,10 +287,17 @@
         <div class="panel">
             <h2>Verify Proof</h2>
             <div>
+                <label>Proof Type:</label>
+                <select id="proofType" onchange="toggleProofType()" style="width: 100%; padding: 8px; margin: 5px 0; background: var(--code-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 4px;">
+                    <option value="inclusion">Inclusion Proof</option>
+                    <option value="non_inclusion">Non-inclusion Proof</option>
+                </select>
                 <label>Key (hex):</label>
                 <input type="text" id="verifyKey" placeholder="Enter 256-bit key in hex">
-                <label>Value (hex):</label>
-                <input type="text" id="verifyValue" placeholder="Enter 32-byte value in hex">
+                <div id="valueSection">
+                    <label>Value (hex):</label>
+                    <input type="text" id="verifyValue" placeholder="Enter 32-byte value in hex">
+                </div>
                 <label>Siblings (hex, one per line):</label>
                 <textarea id="verifySiblings" rows="5" style="width: 100%; margin: 5px 0;"></textarea>
                 <button onclick="verifyProof()">Verify Proof</button>
@@ -182,16 +308,24 @@
 
     <script>
         // Update root hash periodically
-        function updateRootHash() {
+        function updateHashes() {
+            // Update root hash
             fetch('/api/root')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('rootHash').textContent = data.root;
                 });
+            
+            // Update null hash
+            fetch('/api/null_hash')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('nullHash').textContent = data.hash;
+                });
         }
         
-        setInterval(updateRootHash, 2000);
-        updateRootHash();
+        setInterval(updateHashes, 2000);
+        updateHashes();
 
         function setLeaf() {
             const key = document.getElementById('leafKey').value;
@@ -210,9 +344,8 @@
                     document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
                 } else {
                     document.getElementById('leafResult').innerHTML = 
-                        `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
-                         <div class="proof-output">Success! New root: ${data.root}</div>`;
-                    updateRootHash();
+                        `<div class="proof-output">Success! New root: ${data.root}</div>`;
+                    updateHashes();
                 }
             });
         }
@@ -227,8 +360,7 @@
                         document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
                     } else {
                         document.getElementById('leafResult').innerHTML = 
-                            `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
-                             <div class="proof-output">Value: ${data.value}<br>Exists: ${data.exists}</div>`;
+                            `<div class="proof-output">Value: ${data.value}<br>Exists: ${data.exists}</div>`;
                     }
                 });
         }
@@ -243,9 +375,8 @@
                         document.getElementById('leafResult').innerHTML = `Error: ${data.error}`;
                     } else {
                         document.getElementById('leafResult').innerHTML = 
-                            `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
-                             <div class="proof-output">Success! New root: ${data.root}</div>`;
-                        updateRootHash();
+                            `<div class="proof-output">Success! New root: ${data.root}</div>`;
+                        updateHashes();
                     }
                 });
         }
@@ -259,16 +390,52 @@
                     if (data.error) {
                         document.getElementById('proofResult').innerHTML = `Error: ${data.error}`;
                     } else {
-                        const proofContent = `Valid: ${data.valid}<br>Siblings:<br>${data.siblings.join('<br>')}`;
+                        // Create new squares for this proof
+                        const squares = data.siblings.map(hash => ({
+                            color: '#' + hash.slice(-6),
+                            hash: hash
+                        }));
+
+                        // Create the current proof display
+                        const hashLines = data.siblings.map(hash => {
+                            const color = '#' + hash.slice(-6);
+                            return `<div class="hash-line">
+                                     <div class="hash-square" style="background-color: ${color};" title="${hash}"></div>
+                                     <div class="hash-text">${hash}</div>
+                                   </div>`;
+                        }).join('');
+
+                        // Create the visualization grid
+                        const historySquares = squares.map(square => 
+                            `<div class="history-square" style="background-color: ${square.color};" title="${square.hash}"></div>`
+                        ).join('');
+
                         document.getElementById('proofResult').innerHTML = 
-                            `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
-                             <div class="proof-output">${proofContent}</div>`;
+                            `<button class="copy-btn" onclick="copyProofData()">Copy</button>
+                             <div class="proof-output">${hashLines}</div>
+                             <input type="hidden" id="siblingsData" value="${data.siblings.join('\n')}">
+                             <div class="proof-history">
+                                <h3>Proof History Visualization</h3>
+                                <div class="history-grid">${historySquares}</div>
+                             </div>`;
                     }
                 });
         }
 
+        function toggleProofType() {
+            const proofType = document.getElementById('proofType').value;
+            const valueSection = document.getElementById('valueSection');
+            valueSection.style.display = proofType === 'inclusion' ? 'block' : 'none';
+            if (proofType === 'non_inclusion') {
+                document.getElementById('verifyValue').value = document.getElementById('nullHash').textContent;
+            } else {
+                document.getElementById('verifyValue').value = '';
+            }
+        }
+
         function verifyProof() {
             const key = document.getElementById('verifyKey').value;
+            const proofType = document.getElementById('proofType').value;
             const value = document.getElementById('verifyValue').value;
             const siblings = document.getElementById('verifySiblings').value
                 .split('\n')
@@ -279,7 +446,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ key, value, siblings }),
+                body: JSON.stringify({ key, value, siblings, type: proofType }),
             })
             .then(response => response.json())
             .then(data => {
@@ -287,17 +454,37 @@
                     document.getElementById('verifyResult').innerHTML = `Error: ${data.error}`;
                 } else {
                     document.getElementById('verifyResult').innerHTML = 
-                        `<button class="copy-btn" onclick="copyToClipboard(this.parentElement)">Copy</button>
-                         <div class="proof-output">Proof is ${data.valid ? 'valid' : 'invalid'}</div>`;
+                        `<div class="proof-output">Proof is ${data.valid ? 'valid' : 'invalid'}</div>`;
                 }
             });
         }
-        function copyToClipboard(element) {
-            const content = element.querySelector('.proof-output').textContent;
-            navigator.clipboard.writeText(content).then(() => {
-                const btn = element.querySelector('.copy-btn');
-                btn.textContent = 'Copied!';
-                setTimeout(() => btn.textContent = 'Copy', 2000);
+
+        function copyProofData() {
+            const siblings = document.getElementById('siblingsData').value;
+            navigator.clipboard.writeText(siblings).then(() => {
+                const btn = document.querySelector('#proofResult .copy-btn');
+                if (btn) {
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => btn.textContent = 'Copy', 2000);
+                }
+            });
+        }
+
+        function resetTree() {
+            fetch('/api/reset', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error resetting tree: ' + data.error);
+                } else {
+                    updateHashes();
+                    // Clear all result panels
+                    document.getElementById('leafResult').innerHTML = '';
+                    document.getElementById('proofResult').innerHTML = '';
+                    document.getElementById('verifyResult').innerHTML = '';
+                }
             });
         }
 

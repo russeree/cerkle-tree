@@ -4,8 +4,8 @@ import json
 
 app = Flask(__name__)
 
-# Initialize SMT with hash of empty byte array as default value
-smt = smt_bindings.SMT("")  # SHA256("")
+# Initialize SMT
+smt = smt_bindings.SMT()
 
 @app.route('/')
 def index():
@@ -68,19 +68,38 @@ def verify_proof():
     key = data.get('key')
     value = data.get('value')
     siblings = data.get('siblings', [])
+    proof_type = data.get('type', 'inclusion')  # 'inclusion' or 'non_inclusion'
     
-    if not all([key, value, siblings]):
-        return jsonify({'error': 'Key, value, and siblings are required'}), 400
+    if not key or not siblings:
+        return jsonify({'error': 'Key and siblings are required'}), 400
+    
+    if proof_type == 'inclusion' and not value:
+        return jsonify({'error': 'Value is required for inclusion proofs'}), 400
     
     try:
         proof = smt_bindings.MerkleProof()
         for sibling in siblings:
             proof.add_sibling(sibling)
         
-        is_valid = smt.validate_proof(key, value, proof)
+        if proof_type == 'inclusion':
+            is_valid = smt.validate_proof(key, value, proof)
+        else:  # non_inclusion
+            null_hash = smt_bindings.SMT.get_null_hash()
+            is_valid = smt.validate_proof(key, null_hash, proof)
+            
         return jsonify({'valid': is_valid})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+@app.route('/api/null_hash', methods=['GET'])
+def get_null_hash():
+    return jsonify({'hash': smt_bindings.SMT.get_null_hash()})
+
+@app.route('/api/reset', methods=['POST'])
+def reset_tree():
+    global smt
+    smt = smt_bindings.SMT()
+    return jsonify({'success': True, 'root': smt.get_root_hash()})
 
 if __name__ == '__main__':
     app.run(debug=True)
