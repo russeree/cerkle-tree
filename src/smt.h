@@ -164,58 +164,72 @@ public:
     uint256_t getPairedNode(const uint256_t& key) const {
         return isLeft(key) ? (key | 1) : (key & ~uint256_t(1));
     }
-
-
+    
     MerkleProof generateProof(const uint256_t& key) const {
         MerkleProof proof;
         uint256_t currentKey = key;
         
-        // Create a copy of the current leaves to work with
-        std::map<uint256_t, ByteVector> leaves_copy = leaves_;
-        
-        // Collect sibling hashes from leaf to root
-        for (int level = 256; level > 0; level--) {
+        // For each level from leaf to root
+        for (int depth = 0; depth < 256; depth++) {
+            // Get the sibling key by flipping the last bit
             uint256_t siblingKey = getPairedNode(currentKey);
+            
+            // Calculate the sibling hash
             ByteVector siblingHash;
             
-            // Check if there are any leaves in the sibling's subtree
-            uint256_t siblingSubtreeStart = siblingKey << (256 - level);
-            uint256_t siblingSubtreeEnd = (siblingKey + 1) << (256 - level);
-            auto it = leaves_.lower_bound(siblingSubtreeStart);
-            
-            if (it != leaves_.end() && it->first < siblingSubtreeEnd) {
-                // There are leaves in the sibling's subtree, so we need to calculate its hash
-                
-                // Create a map with just the leaves in the sibling's subtree
-                std::map<uint256_t, ByteVector> siblingSubtree;
-                auto subtreeIt = leaves_.lower_bound(siblingSubtreeStart);
-                while (subtreeIt != leaves_.end() && subtreeIt->first < siblingSubtreeEnd) {
-                    siblingSubtree[subtreeIt->first] = subtreeIt->second;
-                    ++subtreeIt;
-                }
-                
-                // Calculate the hash for this subtree using create_depth
-                std::map<uint256_t, ByteVector> processed = siblingSubtree;
-                for (int i = 0; i <= level - 1; i++) {
-                    processed = create_depth(processed, i);
-                    if (processed.size() == 1 && processed.begin()->first == (siblingKey >> (level - 1 - i))) {
-                        break;
-                    }
-                }
-                
-                // If we have a single node at the end with the expected key, use its hash
-                if (processed.size() == 1 && processed.begin()->first == (siblingKey >> (level - 1))) {
-                    siblingHash = processed.begin()->second;
+            // If we're at the leaf level (depth 0)
+            if (depth == 0) {
+                // Check if the sibling leaf exists
+                auto it = leaves_.find(siblingKey);
+                if (it != leaves_.end()) {
+                    siblingHash = it->second;
                 } else {
-                    // Otherwise use the zero hash (shouldn't happen if the tree is valid)
-                    siblingHash = ZERO_HASHES[level];
+                    // If not, use the zero hash for level 0
+                    siblingHash = ZERO_HASHES[0];
                 }
             } else {
-                // No leaves in the sibling's subtree, use the zero hash
-                siblingHash = ZERO_HASHES[level];
+                // For internal nodes, we need to calculate the hash
+                // First, determine the subtree range for this sibling
+                uint256_t siblingSubtreeStart = siblingKey << (256 - depth);
+                uint256_t siblingSubtreeEnd = (siblingKey + 1) << (256 - depth);
+                
+                // Check if there are any leaves in the sibling's subtree
+                auto it = leaves_.lower_bound(siblingSubtreeStart);
+                if (it != leaves_.end() && it->first < siblingSubtreeEnd) {
+                    // There are leaves in the sibling's subtree
+                    // Create a map with just the leaves in the sibling's subtree
+                    std::map<uint256_t, ByteVector> siblingSubtree;
+                    auto subtreeIt = leaves_.lower_bound(siblingSubtreeStart);
+                    while (subtreeIt != leaves_.end() && subtreeIt->first < siblingSubtreeEnd) {
+                        siblingSubtree[subtreeIt->first] = subtreeIt->second;
+                        ++subtreeIt;
+                    }
+                    
+                    // Calculate the hash for this subtree
+                    std::map<uint256_t, ByteVector> processed = siblingSubtree;
+                    for (int i = 0; i < depth; i++) {
+                        processed = create_depth(processed, i);
+                    }
+                    
+                    // The hash should be at the sibling key shifted right by the depth
+                    uint256_t processedKey = siblingKey >> (depth - 1);
+                    auto processedIt = processed.find(processedKey);
+                    if (processedIt != processed.end()) {
+                        siblingHash = processedIt->second;
+                    } else {
+                        // If we couldn't calculate it, use the zero hash
+                        siblingHash = ZERO_HASHES[depth];
+                    }
+                } else {
+                    // No leaves in the sibling's subtree, use the zero hash
+                    siblingHash = ZERO_HASHES[depth];
+                }
             }
             
+            // Add the sibling hash to the proof
             proof.addSibling(siblingHash);
+            
+            // Move up to the next level
             currentKey >>= 1;
         }
         
@@ -263,6 +277,27 @@ public:
 
         // Iterate over all leaves in the input map
         for (const auto& [key, value] : leaves) {
+            // Check if this is a left node (last bit is 0)
+            bool is_left = isLeft(key);
+            
+            // Get the paired node key by flipping the last bit
+            uint256_t paired_key = getPairedNode(key);
+            
+            // Find the paired node in the input map
+            auto paired_it = leaves.find(paired_key);
+            
+            // Get the hash of the paired node or use zero hash if not found
+            ByteVector paired_hash;
+            if (paired_it != leaves.end()) {
+                paired_hash = paired_it->second;
+            } else {
+                // Use the zero hash for the current level
+                // The zero hashes array is indexed with leaves at 0 and root at 256
+                paired_hash = ZERO_HASHES[level];
+            }
+            
+            // Combine the hashes in the correct order (left then right)
+            ByteVector combined;
             // Check if this is a left node (last bit is 0)
             bool is_left = isLeft(key);
             
