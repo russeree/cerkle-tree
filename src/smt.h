@@ -298,27 +298,6 @@ public:
             
             // Combine the hashes in the correct order (left then right)
             ByteVector combined;
-            // Check if this is a left node (last bit is 0)
-            bool is_left = isLeft(key);
-            
-            // Get the paired node key by flipping the last bit
-            uint256_t paired_key = getPairedNode(key);
-            
-            // Find the paired node in the input map
-            auto paired_it = leaves.find(paired_key);
-            
-            // Get the hash of the paired node or use zero hash if not found
-            ByteVector paired_hash;
-            if (paired_it != leaves.end()) {
-                paired_hash = paired_it->second;
-            } else {
-                // Use the zero hash for the current level
-                // The zero hashes array is indexed with leaves at 0 and root at 256
-                paired_hash = ZERO_HASHES[level];
-            }
-            
-            // Combine the hashes in the correct order (left then right)
-            ByteVector combined;
             if (is_left) {
                 combined.insert(combined.end(), value.begin(), value.end());
                 combined.insert(combined.end(), paired_hash.begin(), paired_hash.end());
