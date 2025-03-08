@@ -7,7 +7,7 @@ An algorithm for determining the intersection of leaves in a Sparse Merkle Tree.
 
 The algorithm works by masking off bits from LSB (Least Significant Bit) to MSB (Most Significant Bit) and looking for equalities. This approach allows us to determine a region of isolation where anything under a specific depth value can safely be calculated as if it were a single element in a tree, eliminating the need to worry about collisions.
 
-Add 1 for even depth values greater than 3... (still trying to determine why)
+Add 1 for even depth values greater than 3 and also form a triange tip...
 
 ## Example 1. (2 Leaves)
 
@@ -164,11 +164,11 @@ D6 -                               *
 ```
 I  - 0 1 2 3 4 5 6 7 8 9 A B C D E F 0 1 2 3 4 5 6 7 8 9 A B C D E F 
 D0 - 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F
-D1 -  *   0   0   0   0   0   0   0   0   0   0   0   0   0   0   * 
-D2 -    *       0       0       0       0       0       0       *
-D3 -        *               0               0              *         
+D1 x  *   0   0   0   0   0   0   0   0   0   0   0   0   0   0   * 
+D2 x    *       0       0       0       0       0       0       *
+D3 x        *               0               0               *         
 D4 -            *       0                       0       *
-D5 -                *                               *
+D5 x                *                               *
 D6 -                               *
 ```
 
