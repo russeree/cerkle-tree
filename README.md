@@ -13,6 +13,10 @@ A fast and efficient C++ implementation of a Sparse Merkle Tree library using Op
 
 Cerkle Tree provides a templated implementation of Sparse Merkle Trees with configurable hash functions. _The default implementation uses SHA-256 via OpenSSL._ 
 
+## Documentation
+
+- [Path Finding Algorithm](docs/path_algorithm.md) - Algorithm for determining the intersection of leaves in a Sparse Merkle Tree
+
 ## SMT Playground - Visualizer
 ![image](https://github.com/user-attachments/assets/922f6124-475a-46d0-b272-8838d070584f)
 
