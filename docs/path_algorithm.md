@@ -8,8 +8,6 @@ An algorithm for determining the intersection of leaves in a Sparse Merkle Tree.
 The algorithm works by masking off bits from LSB (Least Significant Bit) to MSB (Most Significant Bit) and looking for equalities. This approach allows us to determine a region of isolation where anything under a specific depth value can safely be calculated as if it were a single element in a tree, eliminating the need to worry about collisions.
 
 
-
-
 ## Example 1. (2 Leaves)
 
 Consider two leaves at positions 1 and 5 with a depth of 3:
