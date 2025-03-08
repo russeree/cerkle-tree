@@ -1,4 +1,4 @@
-# Parallel Bitwise Path Isolation Algorithm
+# Parallel Bitwise Path Isolation Algorithm [WIP]
 
 ## Overview
 An algorithm for determining the intersection of leaves in a Sparse Merkle Tree. The algorithm uses binary representation with a bitmask to efficiently determine path intersections.
@@ -7,7 +7,7 @@ An algorithm for determining the intersection of leaves in a Sparse Merkle Tree.
 
 The algorithm works by masking off bits from LSB (Least Significant Bit) to MSB (Most Significant Bit) and looking for equalities. This approach allows us to determine a region of isolation where anything under a specific depth value can safely be calculated as if it were a single element in a tree, eliminating the need to worry about collisions.
 
-Add 1 for even depth values?
+Add 1 for even depth values greater than 3... (still trying to determine why)
 
 ## Example 1. (2 Leaves)
 
@@ -134,7 +134,7 @@ Result: Equal prefix, so there is interference at this level.
 ## Visual Representation (Isolated Tree)
 
 ```
-D0 - 0 1 2 0 0 5 0 0 | n(256)
+D0 - 0 1 2 0 0 0 0 0 | n(256)
 D1 -  *   *   0   0
 D2 -    *       0
 ```
