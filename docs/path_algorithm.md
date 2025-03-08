@@ -8,7 +8,7 @@ This document describes an algorithm for determining the intersection of leaves 
 
 The algorithm works by masking off bits from LSB (Least Significant Bit) to MSB (Most Significant Bit) and looking for equalities. This approach allows us to determine a region of isolation where anything under a specific depth value can safely be calculated as if it were a single element in a tree, eliminating the need to worry about collisions.
 
-## Example
+## Example 1. (2 Leaves)
 
 Consider two leaves at positions 1 and 5 with a depth of 3:
 
@@ -47,6 +47,62 @@ D0 - 0 1 0 0 0 5 0 0 | n(256)
 D1 -  *   0   *   0
 D2 -    *       *
 D3 -        *
+```
+
+## Example 2. (3 Leaves)
+
+Consider two leaves at positions 1 and 5 with a depth of 3:
+
+```
+leaf 1:  00000001 [0,1]
+leaf 5:  00000101 [4,5]
+leaf 15: 00000001 [14,15]
+```
+
+We mask off the bits one by one:
+
+### Step 1: Depth(1)
+```
+0000000_[1]
+0000010_[1]
+0000111_[1]
+```
+Result: Not equal, so there is no interference at this level.
+
+### Step 2: Depth(2)
+```
+000000_[01]
+000001_[01]
+000011_[11]
+```
+Result: Not equal, so there is no interference at this level.
+
+### Step 3: Depth(3)
+```
+00000_[001]
+00000_[101]
+00001_[111]
+```
+Result: Partial Equal prefix, so there is Some interference at this level between members.
+
+### Step 4: Depth(4)
+```
+0000_[0001]
+0000_[0101]
+0000_[1111]
+```
+Result: Equal prefix, so anything above this value can be just matched with null hashes
+
+## Visual Representation (Isolated Tree) [15 = F]
+
+```
+I  - 0 1 2 3 4 5 6 7 8 9 A B C D E F
+D0 - 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F| ... n(256)
+D1 -  *   0   *   0   0   0   0   *
+D2 -    *       *       0       *
+D3 -        *       *       *
+D4 -            *       *
+D5 -                *
 ```
 
 ## Implementation Notes
