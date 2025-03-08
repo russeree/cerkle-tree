@@ -1,4 +1,4 @@
-# Path Finding Algorithm
+# Path Isolation Algorithm
 
 ## Overview
 
