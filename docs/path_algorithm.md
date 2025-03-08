@@ -1,7 +1,7 @@
-# Path Isolation Algorithm
+# Parallel Bitwise Path Isolation Algorithm
 
 ## Overview
- An algorithm for determining the intersection of leaves in a Sparse Merkle Tree. The algorithm uses binary representation with a bitmask to efficiently determine path intersections.
+An algorithm for determining the intersection of leaves in a Sparse Merkle Tree. The algorithm uses binary representation with a bitmask to efficiently determine path intersections.
 
 ## Algorithm Description
 
