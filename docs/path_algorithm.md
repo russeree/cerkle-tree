@@ -1,4 +1,4 @@
-# Parallel Bitwise Path Isolation Algorithm [WIP]
+# Bitwise Path Isolation Algorithm [WIP]
 
 ## Overview
 An algorithm for determining the intersection of leaves in a Sparse Merkle Tree. The algorithm uses binary representation with a bitmask to efficiently determine path intersections.
@@ -101,7 +101,7 @@ I  - 0 1 2 3 4 5 6 7 8 9 A B C D E F
 D0 - 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F| ... n(256)
 D1 -  *   0   *   0   0   0   0   *
 D2 -    *       *       0       *
-D3 -        *       *       *
+D3 -        *               *
 D4 -            *       *
 D5 -                *
 ```
@@ -150,31 +150,27 @@ I  - 0 1 2 3 4 5 6 7 8 9 A B C D E F 0 1 2 3 4 5 6 7 8 9 A B C D E F
 D0 - 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F
 D1 -  *   0   *   0   0   0   0   *   *   0   *   0   0   0   0   * 
 D2 -    *       *       0       *       *       *       0       *
-D3 -        *       *       *               *       *       *         
+D3 -        *               *               *               *         
 D4 -            *       *                       *       *
 D5 -                *                               *
 D6 -                               *
 ```
 
 ##
-## Visual Representation (Isolated Tree) [6 items]
+## Visual Representation (Isolated Tree) [2 items]
 
-1,5,15,17,20,30
+1, 31
 
 ```
 I  - 0 1 2 3 4 5 6 7 8 9 A B C D E F 0 1 2 3 4 5 6 7 8 9 A B C D E F 
 D0 - 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F 0 1 0 0 0 5 0 0 0 0 0 0 0 0 0 F
-D1 -  *   0   *   0   0   0   0   *   *   0   *   0   0   0   0   0 
-D2 -    *       *       0       *       *       *       0       0
-D3 -        *       *       *               *       *       0         
-D4 -            *       *                       *       0
+D1 -  *   0   0   0   0   0   0   0   0   0   0   0   0   0   0   * 
+D2 -    *       0       0       0       0       0       0       *
+D3 -        *               0               0              *         
+D4 -            *       0                       0       *
 D5 -                *                               *
 D6 -                               *
 ```
-
-
-
-
 
 ## Implementation Notes
 
