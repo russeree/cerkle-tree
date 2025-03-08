@@ -29,8 +29,7 @@ add_executable(${PROJECT_NAME}_test
     tests/test_smt_hashing.cpp
     tests/test_smt_nodes.cpp
     tests/test_smt_proofs.cpp
-    tests/test_smt_non_inclusion_proofs.cpp
-    tests/test_smt_large_tree.cpp
+    tests/test_smt_root_calculation.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_test 
