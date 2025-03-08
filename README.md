@@ -4,7 +4,10 @@ A fast and efficient C++ implementation of a Sparse Merkle Tree library using Op
  
  - ⚠️This library is not complete and currently bugged ⚠️
  - Do not use in production.
- - Issues exist at nearly every level and this is a WIP 
+ - Issues exist at nearly every level and this is a WIP
+
+## Notes and Thoughts
+[Notes Gist](https://gist.github.com/russeree/ad594779d1b3dc978495beab712311dd) 
 
 ## Overview
 
