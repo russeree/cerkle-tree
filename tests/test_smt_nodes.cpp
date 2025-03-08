@@ -16,7 +16,6 @@ struct SmtNodeFixture {
 };
 
 BOOST_FIXTURE_TEST_CASE(test_leaf_operations, SmtNodeFixture) {
-    BOOST_TEST_MESSAGE("Testing basic leaf operations (set, get, exists)");
     uint256_t key1(0);  // Left node (ends in 0)
     uint256_t key2(1);  // Right node (ends in 1)
     ByteVector value1 = createTestValue(0x11);
@@ -36,8 +35,6 @@ BOOST_FIXTURE_TEST_CASE(test_leaf_operations, SmtNodeFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(test_node_position, SmtNodeFixture) {
-    BOOST_TEST_MESSAGE("Testing node position identification (left/right)");
-
     // Small Node Keys
     uint256_t leftNode1(0);     // ...000
     uint256_t rightNode1(1);    // ...001
@@ -57,7 +54,6 @@ BOOST_FIXTURE_TEST_CASE(test_node_position, SmtNodeFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(test_paired_nodes, SmtNodeFixture) {
-    BOOST_TEST_MESSAGE("Testing paired node relationships");
     // Test paired node relationships
     uint256_t leftNode(0);    // ...000
     uint256_t rightNode(1);   // ...001

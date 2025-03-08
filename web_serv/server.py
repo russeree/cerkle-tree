@@ -101,4 +101,4 @@ def reset_tree():
     return jsonify({'success': True, 'root': smt.get_root_hash()})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

@@ -4,7 +4,6 @@
 #include "hash_function.h"
 #include "hash_sha256.h"
 #include "proof.h"
-#include <iostream>
 #include <vector>
 #include <bitset>
 #include <map>

@@ -12,8 +12,6 @@ struct SmtRootCalcFixture {
 };
 
 BOOST_FIXTURE_TEST_CASE(test_create_depth, SmtRootCalcFixture) {
-    BOOST_TEST_MESSAGE("Testing create_depth function");
-    
     // Create a map with two leaves at level 256
     std::map<uint256_t, ByteVector> leaves;
     ByteVector value1{0x01, 0x01, 0x01};
@@ -41,8 +39,6 @@ BOOST_FIXTURE_TEST_CASE(test_create_depth, SmtRootCalcFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(test_calculate_root_from_leaves, SmtRootCalcFixture) {
-    BOOST_TEST_MESSAGE("Testing calculateRootFromLeaves function");
-    
     // Create a map with several leaves
     std::map<uint256_t, ByteVector> leaves;
     for (uint256_t i = 0; i < 10; i++) {
@@ -63,8 +59,6 @@ BOOST_FIXTURE_TEST_CASE(test_calculate_root_from_leaves, SmtRootCalcFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(test_calculate_root_from_current_leaves, SmtRootCalcFixture) {
-    BOOST_TEST_MESSAGE("Testing calculateRootFromCurrentLeaves function");
-    
     // Add several leaves to the SMT
     for (uint256_t i = 0; i < 10; i++) {
         ByteVector value{static_cast<uint8_t>(i), static_cast<uint8_t>(i), static_cast<uint8_t>(i)};
@@ -83,7 +77,6 @@ BOOST_FIXTURE_TEST_CASE(test_calculate_root_from_current_leaves, SmtRootCalcFixt
 
 BOOST_FIXTURE_TEST_CASE(test_root_calculation_performance, SmtRootCalcFixture) {
     const size_t TEST_LEAVES_COUNT = 1000;
-    BOOST_TEST_MESSAGE("Testing root calculation performance with " + std::to_string(TEST_LEAVES_COUNT) + " leaves");
     
     // Create leaves
     std::map<uint256_t, ByteVector> leaves;
@@ -97,23 +90,15 @@ BOOST_FIXTURE_TEST_CASE(test_root_calculation_performance, SmtRootCalcFixture) {
     ByteVector originalRoot = smt.getRootHash();
     
     // Calculate root using the new method
-    auto start = std::chrono::steady_clock::now();
     ByteVector calculatedRoot = smt.calculateRootFromLeaves(leaves);
-    auto end = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    
-    BOOST_TEST_MESSAGE("Root calculation time: " + std::to_string(duration.count()) + "ms");
     
     // Verify the calculated root matches the original root
     BOOST_TEST(calculatedRoot == originalRoot);
 }
 
 BOOST_FIXTURE_TEST_CASE(test_null_hash_insertion, SmtRootCalcFixture) {
-    BOOST_TEST_MESSAGE("Testing insertion of null hash into leaves");
-    
     // Get the null hash
     ByteVector nullHash = smt.getNullHash();
-    BOOST_TEST_MESSAGE("Null hash: " + HashFunction::hashToString(nullHash));
     
     // Create a map with a single leaf containing the null hash
     std::map<uint256_t, ByteVector> leaves;
@@ -122,14 +107,12 @@ BOOST_FIXTURE_TEST_CASE(test_null_hash_insertion, SmtRootCalcFixture) {
     
     // Calculate root using the calculateRootFromLeaves method
     ByteVector calculatedRoot = smt.calculateRootFromLeaves(leaves);
-    BOOST_TEST_MESSAGE("Calculated root hash: " + HashFunction::hashToString(calculatedRoot));
     
     // Add the null hash to the SMT using the setLeafHash method
     smt.setLeafHash(key, nullHash);
     
     // Get the root hash from the SMT
     ByteVector smtRoot = smt.getRootHash();
-    BOOST_TEST_MESSAGE("SMT root hash: " + HashFunction::hashToString(smtRoot));
     
     // Verify the calculated root matches the SMT root
     BOOST_TEST(calculatedRoot == smtRoot);

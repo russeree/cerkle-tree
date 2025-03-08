@@ -11,12 +11,10 @@ struct SmtInitFixture {
 };
 
 BOOST_FIXTURE_TEST_CASE(test_basic_initialization, SmtInitFixture) {
-    BOOST_TEST_MESSAGE("Testing basic SMT initialization");
     BOOST_TEST(smt.getRootHash().size() == 32); // SHA256 (32-byte hashes)
 }
 
 BOOST_FIXTURE_TEST_CASE(test_root_hash, SmtInitFixture) {
-    BOOST_TEST_MESSAGE("Testing root hash initialization");
     BOOST_TEST(smt.getRootHash() == SmtContext<Sha256HashFunction>::getZeroHash(256));
     
     // Printing Tests
@@ -26,7 +24,6 @@ BOOST_FIXTURE_TEST_CASE(test_root_hash, SmtInitFixture) {
 }
 
 BOOST_AUTO_TEST_CASE(test_default_initialization) {
-    BOOST_TEST_MESSAGE("Testing initialization with default empty value");
     Sha256HashFunction hashFunc;
     SmtContext<Sha256HashFunction> smt(hashFunc);
     
