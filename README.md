@@ -1,6 +1,10 @@
 # Cerkle Tree
 
-A fast and efficient C++ implementation of a Sparse Merkle Tree library using OpenSSL.
+A fast and efficient C++ implementation of a Sparse Merkle Tree library using OpenSSL. Notes
+ 
+ - ⚠️This library is not complete and currently bugged ⚠️
+ - Do not use in production.
+ - Issues exist at nearly every level and this is a WIP 
 
 ## Overview
 
