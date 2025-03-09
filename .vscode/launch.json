@@ -1,0 +1,169 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug All Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cerkle-tree_test",
+            "args": [
+                "--log_level=all",
+                "--report_level=detailed",
+                "--color_output=yes",
+                "--show_progress=yes"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "debug-all-tests",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug SMT Hashing Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cerkle-tree_test",
+            "args": [
+                "--log_level=all",
+                "--report_level=detailed",
+                "--color_output=yes",
+                "--show_progress=yes",
+                "--run_test=SmtHashingTests/*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "debug-smt-hashing-tests",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug SMT Initialization Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cerkle-tree_test",
+            "args": [
+                "--log_level=all",
+                "--report_level=detailed",
+                "--color_output=yes",
+                "--show_progress=yes",
+                "--run_test=SmtInitializationTests/*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "debug-smt-initialization-tests",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug SMT Nodes Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cerkle-tree_test",
+            "args": [
+                "--log_level=all",
+                "--report_level=detailed",
+                "--color_output=yes",
+                "--show_progress=yes",
+                "--run_test=SmtNodeTests/*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "debug-smt-nodes-tests",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug SMT Proofs Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cerkle-tree_test",
+            "args": [
+                "--log_level=all",
+                "--report_level=detailed",
+                "--color_output=yes",
+                "--show_progress=yes",
+                "--run_test=SmtProofTests/*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "debug-smt-proofs-tests",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug SMT Root Calculation Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/cerkle-tree_test",
+            "args": [
+                "--log_level=all",
+                "--report_level=detailed",
+                "--color_output=yes",
+                "--show_progress=yes",
+                "--run_test=SmtRootCalculationTests/*"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "debug-smt-root-calculation-tests",
+            "miDebuggerPath": "/usr/bin/gdb"
+        }
+    ]
+}

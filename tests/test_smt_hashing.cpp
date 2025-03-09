@@ -97,7 +97,7 @@ BOOST_FIXTURE_TEST_CASE(test_merkle_root_batch_update, SmtHashFixture) {
         updates.emplace_back(i, SmtTestHelper::makeValue(i % 256));
     }
     
-    smt.setBatchLeaves(updates);
+    smt.setBatchLeavesHash(updates);
     
     // Verify leaves at start, middle, and end
     BOOST_TEST(smt.getLeaf(0) == SmtTestHelper::makeValue(0));

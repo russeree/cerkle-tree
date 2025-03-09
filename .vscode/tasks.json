@@ -1,0 +1,99 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-tests",
+            "type": "shell",
+            "command": "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "debug-all-tests",
+            "type": "shell",
+            "command": "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "debug-smt-hashing-tests",
+            "type": "shell",
+            "command": "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "debug-smt-initialization-tests",
+            "type": "shell",
+            "command": "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "debug-smt-nodes-tests",
+            "type": "shell",
+            "command": "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "debug-smt-proofs-tests",
+            "type": "shell",
+            "command": "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "debug-smt-root-calculation-tests",
+            "type": "shell",
+            "command": "mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

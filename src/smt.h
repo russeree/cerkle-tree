@@ -4,8 +4,7 @@
 #include "hash_function.h"
 #include "hash_sha256.h"
 #include "proof.h"
-#include <iostream>
-#include <format>
+#include <bitset>
 #include <vector>
 #include <bitset>
 #include <map>
@@ -84,7 +83,7 @@ public:
      * @param value The hash value to store at this leaf
      */
     void setLeaf(const uint256_t& key, const ByteVector& value) {
-        setLeafHash(key, value);
+        setLeafValue(key, value);
     }
 
     /**
@@ -98,14 +97,28 @@ public:
     }
 
     /**
-     * @brief Set multiple leaves in a batch, updating the root only once
+     * @brief Set multiple leaves in a batch by hash (direct), updating the root only once
      * 
      * @param updates Vector of key-value pairs to update
      */
-    void setBatchLeaves(const std::vector<std::pair<uint256_t, ByteVector>>& updates) {
+    void setBatchLeavesHash(const std::vector<std::pair<uint256_t, ByteVector>>& updates) {
         if (updates.empty()) return;
         for (const auto& [key, value] : updates) {
             setLeafNoUpdate(key, value);
+        }
+        updateMerkleRoot(updates.back().first);
+    }
+
+    /**
+     * @brief Set multiple leaves in a batch by value, updating the root only once
+     * 
+     * @param updates Vector of key-value pairs to update
+     */
+    void setBatchLeavesValue(const std::vector<std::pair<uint256_t, ByteVector>>& updates) {
+        if (updates.empty()) return;
+        for (const auto& [key, value] : updates) {
+            ByteVector hash = hashFunction_.hash(value);
+            setLeafNoUpdate(key, hash);
         }
         updateMerkleRoot(updates.back().first);
     }
@@ -169,65 +182,41 @@ public:
     MerkleProof generateProof(const uint256_t& key) const {
         MerkleProof proof;
         uint256_t currentKey = key;
+        std::map<uint256_t, ByteVector> processed;
+        bool found = true; // Track if we can find the parent node
         
         // For each level from leaf to root
         for (int depth = 0; depth < 256; depth++) {
-            std::cout << std::format("Generating a proof at depth: {}", depth) << std::endl;
-            // Get the sibling key by flipping the last bit
             uint256_t siblingKey = getPairedNode(currentKey);
             ByteVector siblingHash;
             
-            // If we're at the leaf level (depth 0)
             if (depth == 0) {
-                // Check if the sibling leaf exists
                 auto it = leaves_.find(siblingKey);
                 if (it != leaves_.end()) {
                     siblingHash = it->second;
+                    processed[siblingKey] = siblingHash;
                 } else {
                     // If not, use the zero hash for level 0
                     siblingHash = ZERO_HASHES[0];
                 }
+                processed = leaves_;
             } else {
-                // For internal nodes, we need to calculate the hash
-                // First, determine the subtree range for this sibling
-                uint256_t siblingSubtreeStart = siblingKey << (256 - depth);
-                uint256_t siblingSubtreeEnd = (siblingKey + 1) << (256 - depth);
-                
-                // Check if there are any leaves in the sibling's subtree
-                auto it = leaves_.lower_bound(siblingSubtreeStart);
-                if (it != leaves_.end() && it->first < siblingSubtreeEnd) {
-                    // There are leaves in the sibling's subtree
-                    // Create a map with just the leaves in the sibling's subtree
-                    std::map<uint256_t, ByteVector> siblingSubtree;
-                    auto subtreeIt = leaves_.lower_bound(siblingSubtreeStart);
-                    while (subtreeIt != leaves_.end() && subtreeIt->first < siblingSubtreeEnd) {
-                        siblingSubtree[subtreeIt->first] = subtreeIt->second;
-                        ++subtreeIt;
-                    }
-                    
-                    // Calculate the hash for this subtree
-                    std::map<uint256_t, ByteVector> processed = siblingSubtree;
-                    for (int i = 0; i < depth; i++) {
-                        processed = create_depth(processed, i);
-                    }
-                    
-                    // The hash should be at the sibling key shifted right by the depth
-                    uint256_t processedKey = siblingKey >> (depth - 1);
-                    auto processedIt = processed.find(processedKey);
-                    if (processedIt != processed.end()) {
-                        siblingHash = processedIt->second;
-                    } else {
-                        // If we couldn't calculate it, use the zero hash
-                        siblingHash = ZERO_HASHES[depth];
-                    }
+                // Update update the depth of the tree moving the D -> (D + 1)
+                processed = create_depth(processed, depth);
+
+                auto processedIt = processed.find(siblingKey);
+                if (processedIt != processed.end()) {
+                    siblingHash = processedIt->second;
                 } else {
-                    // No leaves in the sibling's subtree, use the zero hash
+                    //std::cout << "\t Failed to find the parent key " << siblingKey << std::endl;
                     siblingHash = ZERO_HASHES[depth];
                 }
             }
             
             // Add the sibling hash to the proof
             proof.addSibling(siblingHash);
+            //std::cout << "Currently processing proof at depth " << depth 
+            //    << " and sibling hash: " << HashFunction::hashToString(siblingHash) << std::endl;
             
             // Move up to the next level
             currentKey >>= 1;
@@ -242,24 +231,6 @@ public:
     void clearLeaves() {
         leaves_.clear();
         root_ = ZERO_HASHES[256];
-    }
-
-    bool validateProof(const uint256_t& key, const ByteVector& value, const MerkleProof& proof) const {
-        if (!proof.isValid() || proof.size() != 256) {
-            return false;
-        }
-
-        ByteVector currentHash = value;
-        return validateProofPath(key, currentHash, proof);
-    }
-
-    bool validateNonInclusionProof(const uint256_t& key, const MerkleProof& proof) const {
-        if (!proof.isValid() || proof.size() != 256) {
-            return false;
-        }
-
-        ByteVector currentHash = getNullHash();
-        return validateProofPath(key, currentHash, proof);
     }
 
     /**
@@ -318,6 +289,24 @@ public:
         }
         
         return n_leaves;
+    }
+
+    bool validateNonInclusionProof(const uint256_t& key, const MerkleProof& proof) const {
+        if (!proof.isValid() || proof.size() != 256) {
+            return false;
+        }
+
+        ByteVector currentHash = getNullHash();
+        return validateProofPath(key, currentHash, proof);
+    }
+
+    bool validateProof(const uint256_t& key, const ByteVector& value, const MerkleProof& proof) const {
+        if (!proof.isValid() || proof.size() != 256) {
+            return false;
+        }
+
+        ByteVector currentHash = hashFunction_.hash(value);
+        return validateProofPath(key, currentHash, proof);
     }
 
     /**
@@ -395,7 +384,7 @@ private:
         }
         
         // For empty tree or when all leaves have default values, compare against ZERO_HASHES[256]
-        return currentHash == (leaves_.empty() ? ZERO_HASHES[256] : root_);
+        return currentHash == root_;
     }
 
 private:

@@ -29,8 +29,8 @@ BOOST_FIXTURE_TEST_CASE(test_leaf_operations, SmtNodeFixture) {
     BOOST_TEST(smt.hasLeaf(key2));
     BOOST_TEST(!smt.hasLeaf(uint256_t(2)));  // Non-existent key
     
-    BOOST_TEST(smt.getLeaf(key1) == value1);
-    BOOST_TEST(smt.getLeaf(key2) == value2);
+    BOOST_TEST(smt.getLeaf(key1) == hashFunction.hash(value1));
+    BOOST_TEST(smt.getLeaf(key2) == hashFunction.hash(value2));
     BOOST_TEST(smt.getLeaf(uint256_t(2)) == ByteVector());
 }
 

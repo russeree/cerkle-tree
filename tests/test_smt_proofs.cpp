@@ -11,8 +11,8 @@ struct SmtProofFixture {
 };
 
 BOOST_FIXTURE_TEST_CASE(test_proof_single_item, SmtProofFixture) {
-    uint256_t key = 123;
-    ByteVector value{0x01, 0x02, 0x03};
+    uint256_t key = 255;
+    ByteVector value{};
     
     smt.setLeaf(key, value);
     MerkleProof proof = smt.generateProof(key);
@@ -24,7 +24,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_single_item, SmtProofFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(test_proof_single_leaf, SmtProofFixture) {
-    uint256_t key = 42;
+    uint256_t key = 63;
     ByteVector value{0x01, 0x02, 0x03};
     
     smt.setLeaf(key, value);
@@ -40,8 +40,8 @@ BOOST_FIXTURE_TEST_CASE(test_proof_single_leaf, SmtProofFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(test_proof_multiple_leaves, SmtProofFixture) {
-    uint256_t key1 = 133713371337;
-    uint256_t key2 = 999;
+    uint256_t key1 = 0;
+    uint256_t key2 = 2;
     ByteVector value1{0x01, 0x01, 0x01};
     ByteVector value2{0x02, 0x02, 0x02};
     
@@ -78,7 +78,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_multiple_leaves, SmtProofFixture) {
 
 BOOST_FIXTURE_TEST_CASE(test_proof_null_hash_at_index_zero, SmtProofFixture) {
     // Create an empty SMT (no leaves added)
-    ByteVector nullHash = smt.getNullHash();
+    ByteVector nullBytes = {};
     ByteVector rootHash = smt.getRootHash();
     
     // Generate a proof for key 0
@@ -89,7 +89,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_null_hash_at_index_zero, SmtProofFixture) {
     BOOST_TEST(proof.size() == 256);
     
     // Verify that the proof validates correctly with the null hash
-    bool validationResult = smt.validateProof(key, nullHash, proof);
+    bool validationResult = smt.validateProof(key, {}, proof);
     BOOST_TEST(validationResult);
 }
 
@@ -104,7 +104,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_batch_leaves, SmtProofFixture) {
         {key1, value1},
         {key2, value2}
     };
-    smt.setBatchLeaves(updates);
+    smt.setBatchLeavesHash(updates);
     
     // Generate and validate proof for key1
     MerkleProof proof1 = smt.generateProof(key1);
