@@ -49,6 +49,14 @@ BOOST_FIXTURE_TEST_CASE(test_proof_multiple_leaves, SmtProofFixture) {
     ByteVector value1{0x01, 0x01, 0x01};
     ByteVector value2{0x02, 0x02, 0x02};
 
+    Sha256HashFunction hashFunction;
+    ByteVector hash1 = hashFunction.hash(value1);
+    ByteVector hash2 = hashFunction.hash(value2);
+    std::cout << "Original value1: " << bytesToHexString(value1) << std::endl;
+    std::cout << "Original value2: " << bytesToHexString(value2) << std::endl;
+    std::cout << "Hash of value1: " << bytesToHexString(hash1) << std::endl;
+    std::cout << "Hash of value2: " << bytesToHexString(hash2) << std::endl;
+
     // Double set the same leaf.
     smt.setLeaf(key1, value1);
     smt.setLeaf(key1, value1);
@@ -141,8 +149,6 @@ BOOST_FIXTURE_TEST_CASE(test_proof_performance_with_random_values, SmtProofFixtu
         // Log progress every 100 leaves
         if (i % 100 == 0 && i > 0) {
             std::cout << "  Added " << i << " leaves so far..." << std::endl;
-            ByteVector root_hash = smt.getRootHash();
-            std::cout << "Root hash: " << bytesToHexString(root_hash) << std::endl;
         }
     }
     
@@ -151,6 +157,10 @@ BOOST_FIXTURE_TEST_CASE(test_proof_performance_with_random_values, SmtProofFixtu
         end_insertion - start_insertion).count();
     std::cout << "Insertion of " << TEST_LEAVES_COUNT << " leaves completed in " 
               << insertion_duration << " ms" << std::endl;
+    
+    // Get the root hash
+    ByteVector root_hash = smt.getRootHash();
+    std::cout << "Root hash: " << bytesToHexString(root_hash) << std::endl;
     
     // Generate and verify proofs for all leaves
     std::cout << "Generating and verifying proofs for all " << TEST_LEAVES_COUNT << " leaves..." << std::endl;

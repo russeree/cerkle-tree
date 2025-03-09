@@ -202,8 +202,7 @@ public:
                 }
                 processed = leaves_;
             } else {
-                // Update update the depth of the tree moving the D -> (D + 1)
-                processed = create_depth(processed, depth);
+                processed = create_depth(processed, depth - 1);
 
                 auto processedIt = processed.find(siblingKey);
                 if (processedIt != processed.end()) {
