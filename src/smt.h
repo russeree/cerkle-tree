@@ -34,13 +34,15 @@ public:
     }
 
     SmtContext(const H& hashFunction = H())
-        : defaultValue_(), hashFunction_(hashFunction) {
+        : hashFunction_(hashFunction) {
         
         if (!ZERO_HASHES_INITIALIZED) {
             initializeZeroHashes();
             ZERO_HASHES_INITIALIZED = true;
         }
         
+        // Initialize defaultValue_ to the hash of an empty ByteVector (the null hash)
+        defaultValue_ = ZERO_HASHES[0];
         root_ = ZERO_HASHES[256];
     }
     
@@ -61,7 +63,7 @@ public:
      */
     void setLeafHash(const uint256_t& key, const ByteVector& hash) {
         setLeafNoUpdate(key, hash);
-        updateMerkleRoot(key);
+        updateMerkleRoot();
     }
     
     /**
@@ -73,7 +75,7 @@ public:
     void setLeafValue(const uint256_t& key, const ByteVector& value) {
         ByteVector hash = hashFunction_.hash(value);
         setLeafNoUpdate(key, hash);
-        updateMerkleRoot(key);
+        updateMerkleRoot();
     }
     
     /**
@@ -93,7 +95,7 @@ public:
      */
     void removeLeaf(const uint256_t& key) {
         leaves_.erase(key);
-        updateMerkleRoot(key);
+        updateMerkleRoot();
     }
 
     /**
@@ -106,7 +108,7 @@ public:
         for (const auto& [key, value] : updates) {
             setLeafNoUpdate(key, value);
         }
-        updateMerkleRoot(updates.back().first);
+        updateMerkleRoot();
     }
 
     /**
@@ -120,7 +122,7 @@ public:
             ByteVector hash = hashFunction_.hash(value);
             setLeafNoUpdate(key, hash);
         }
-        updateMerkleRoot(updates.back().first);
+        updateMerkleRoot();
     }
 
     /**
@@ -133,7 +135,7 @@ public:
         for (const auto& key : keys) {
             leaves_.erase(key);
         }
-        updateMerkleRoot(keys.back());
+        updateMerkleRoot();
     }
 
     /**
@@ -196,7 +198,6 @@ public:
                     siblingHash = it->second;
                     processed[siblingKey] = siblingHash;
                 } else {
-                    // If not, use the zero hash for level 0
                     siblingHash = ZERO_HASHES[0];
                 }
                 processed = leaves_;
@@ -208,17 +209,11 @@ public:
                 if (processedIt != processed.end()) {
                     siblingHash = processedIt->second;
                 } else {
-                    //std::cout << "\t Failed to find the parent key " << siblingKey << std::endl;
                     siblingHash = ZERO_HASHES[depth];
                 }
             }
             
-            // Add the sibling hash to the proof
             proof.addSibling(siblingHash);
-            //std::cout << "Currently processing proof at depth " << depth 
-            //    << " and sibling hash: " << HashFunction::hashToString(siblingHash) << std::endl;
-            
-            // Move up to the next level
             currentKey >>= 1;
         }
         
@@ -462,10 +457,8 @@ private:
 
     /**
      * @brief Update the merkle root after a leaf change
-     * 
-     * @param key The 256-bit key of the modified leaf
      */
-    void updateMerkleRoot(uint256_t) {
+    void updateMerkleRoot() {
         // If tree is empty after updates, use the initial root
         if (leaves_.empty()) {
             root_ = ZERO_HASHES[256];

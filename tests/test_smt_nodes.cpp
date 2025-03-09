@@ -31,7 +31,7 @@ BOOST_FIXTURE_TEST_CASE(test_leaf_operations, SmtNodeFixture) {
     
     BOOST_TEST(smt.getLeaf(key1) == hashFunction.hash(value1));
     BOOST_TEST(smt.getLeaf(key2) == hashFunction.hash(value2));
-    BOOST_TEST(smt.getLeaf(uint256_t(2)) == ByteVector());
+    BOOST_TEST(smt.getLeaf(uint256_t(2)) == hashFunction.hash(ByteVector()));
 }
 
 BOOST_FIXTURE_TEST_CASE(test_node_position, SmtNodeFixture) {

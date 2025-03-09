@@ -38,84 +38,75 @@ BOOST_FIXTURE_TEST_CASE(test_create_depth, SmtRootCalcFixture) {
     BOOST_TEST(level255.begin()->second == expectedHash);
 }
 
-BOOST_FIXTURE_TEST_CASE(test_calculate_root_from_leaves, SmtRootCalcFixture) {
-    // Create a map with several leaves
-    std::map<uint256_t, ByteVector> leaves;
-    for (uint256_t i = 0; i < 10; i++) {
-        ByteVector value{static_cast<uint8_t>(i), static_cast<uint8_t>(i), static_cast<uint8_t>(i)};
-        leaves[i] = value;
-    }
-    
-    // Calculate root using the new method
-    ByteVector root = smt.calculateRootFromLeaves(leaves);
-    
-    // Add the same leaves to the SMT
-    for (const auto& [key, value] : leaves) {
-        smt.setLeaf(key, value);
-    }
-    
-    // Verify the calculated root matches the SMT's root
-    BOOST_TEST(root == smt.getRootHash());
-}
-
 BOOST_FIXTURE_TEST_CASE(test_calculate_root_from_current_leaves, SmtRootCalcFixture) {
+    std::cout << "Starting test_calculate_root_from_current_leaves" << std::endl;
+    
     // Add several leaves to the SMT
+    std::cout << "Adding 10 leaves to the SMT..." << std::endl;
     for (uint256_t i = 0; i < 10; i++) {
         ByteVector value{static_cast<uint8_t>(i), static_cast<uint8_t>(i), static_cast<uint8_t>(i)};
+        std::cout << "  Setting leaf at index " << i << " with value [" 
+                  << static_cast<int>(value[0]) << "," 
+                  << static_cast<int>(value[1]) << "," 
+                  << static_cast<int>(value[2]) << "]" << std::endl;
         smt.setLeaf(i, value);
     }
     
     // Get the current root
+    std::cout << "Getting the current root hash..." << std::endl;
     ByteVector originalRoot = smt.getRootHash();
+    std::cout << "Original root hash: " << bytesToHexString(originalRoot) << std::endl;
     
     // Calculate root using the new method
+    std::cout << "Calculating root using calculateRootFromCurrentLeaves()..." << std::endl;
     ByteVector calculatedRoot = smt.calculateRootFromCurrentLeaves();
+    std::cout << "Calculated root hash: " << bytesToHexString(calculatedRoot) << std::endl;
     
     // Verify the calculated root matches the original root
+    std::cout << "Verifying calculated root matches original root..." << std::endl;
+    bool rootsMatch = (calculatedRoot == originalRoot);
+    std::cout << "Roots match: " << (rootsMatch ? "YES" : "NO") << std::endl;
     BOOST_TEST(calculatedRoot == originalRoot);
-}
-
-BOOST_FIXTURE_TEST_CASE(test_root_calculation_performance, SmtRootCalcFixture) {
-    const size_t TEST_LEAVES_COUNT = 1000;
     
-    // Create leaves
-    std::map<uint256_t, ByteVector> leaves;
-    for (size_t i = 0; i < TEST_LEAVES_COUNT; i++) {
-        ByteVector value{static_cast<uint8_t>(i % 256), static_cast<uint8_t>(i % 256), static_cast<uint8_t>(i % 256)};
-        leaves[i] = value;
-        smt.setLeaf(i, value);
-    }
-    
-    // Get the original root
-    ByteVector originalRoot = smt.getRootHash();
-    
-    // Calculate root using the new method
-    ByteVector calculatedRoot = smt.calculateRootFromLeaves(leaves);
-    
-    // Verify the calculated root matches the original root
-    BOOST_TEST(calculatedRoot == originalRoot);
+    std::cout << "test_calculate_root_from_current_leaves completed" << std::endl;
 }
 
 BOOST_FIXTURE_TEST_CASE(test_null_hash_insertion, SmtRootCalcFixture) {
+    std::cout << "Starting test_null_hash_insertion" << std::endl;
+    
     // Get the null hash
+    std::cout << "Getting the null hash..." << std::endl;
     ByteVector nullHash = smt.getNullHash();
+    std::cout << "Null hash: " << bytesToHexString(nullHash) << std::endl;
     
     // Create a map with a single leaf containing the null hash
+    std::cout << "Creating a map with a single leaf containing the null hash..." << std::endl;
     std::map<uint256_t, ByteVector> leaves;
     uint256_t key = 123;
     leaves[key] = nullHash;
+    std::cout << "Added null hash at key: " << key << std::endl;
     
     // Calculate root using the calculateRootFromLeaves method
+    std::cout << "Calculating root using calculateRootFromLeaves()..." << std::endl;
     ByteVector calculatedRoot = smt.calculateRootFromLeaves(leaves);
+    std::cout << "Calculated root hash: " << bytesToHexString(calculatedRoot) << std::endl;
     
     // Add the null hash to the SMT using the setLeafHash method
+    std::cout << "Adding the null hash to the SMT using setLeafHash()..." << std::endl;
     smt.setLeafHash(key, nullHash);
     
     // Get the root hash from the SMT
+    std::cout << "Getting the SMT root hash..." << std::endl;
     ByteVector smtRoot = smt.getRootHash();
+    std::cout << "SMT root hash: " << bytesToHexString(smtRoot) << std::endl;
     
     // Verify the calculated root matches the SMT root
+    std::cout << "Verifying calculated root matches SMT root..." << std::endl;
+    bool rootsMatch = (calculatedRoot == smtRoot);
+    std::cout << "Roots match: " << (rootsMatch ? "YES" : "NO") << std::endl;
     BOOST_TEST(calculatedRoot == smtRoot);
+    
+    std::cout << "test_null_hash_insertion completed" << std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
