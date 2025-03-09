@@ -167,13 +167,11 @@ public:
     MerkleProof generateProof(const uint256_t& key) const {
         MerkleProof proof;
         uint256_t currentKey = key;
+        std::map<uint256_t, ByteVector> processed;
         
         // For each level from leaf to root
         for (int depth = 0; depth < 256; depth++) {
-            // Get the sibling key by flipping the last bit
             uint256_t siblingKey = getPairedNode(currentKey);
-            
-            // Calculate the sibling hash
             ByteVector siblingHash;
             
             // If we're at the leaf level (depth 0)
@@ -182,38 +180,56 @@ public:
                 auto it = leaves_.find(siblingKey);
                 if (it != leaves_.end()) {
                     siblingHash = it->second;
+                    // Add to processed map for future depth calculations
+                    processed[siblingKey] = siblingHash;
                 } else {
                     // If not, use the zero hash for level 0
                     siblingHash = ZERO_HASHES[0];
+                }
+                
+                // Also add the current leaf to processed if it exists
+                auto currentIt = leaves_.find(currentKey);
+                if (currentIt != leaves_.end()) {
+                    processed[currentKey] = currentIt->second;
                 }
             } else {
                 // For internal nodes, we need to calculate the hash
                 // First, determine the subtree range for this sibling
                 uint256_t siblingSubtreeStart = siblingKey << (256 - depth);
                 uint256_t siblingSubtreeEnd = (siblingKey + 1) << (256 - depth);
-                
+
                 // Check if there are any leaves in the sibling's subtree
                 auto it = leaves_.lower_bound(siblingSubtreeStart);
                 if (it != leaves_.end() && it->first < siblingSubtreeEnd) {
-                    // There are leaves in the sibling's subtree
-                    // Create a map with just the leaves in the sibling's subtree
-                    std::map<uint256_t, ByteVector> siblingSubtree;
-                    auto subtreeIt = leaves_.lower_bound(siblingSubtreeStart);
-                    while (subtreeIt != leaves_.end() && subtreeIt->first < siblingSubtreeEnd) {
-                        siblingSubtree[subtreeIt->first] = subtreeIt->second;
-                        ++subtreeIt;
+                    // If we haven't processed this depth yet, do so now
+                    if (processed.empty() || processed.begin()->first >= (1ULL << depth)) {
+                        // First, populate processed with all leaves in the relevant subtree
+                        for (auto leafIt = leaves_.lower_bound(siblingSubtreeStart); 
+                             leafIt != leaves_.end() && leafIt->first < siblingSubtreeEnd; 
+                             ++leafIt) {
+                            processed[leafIt->first] = leafIt->second;
+                        }
+                        
+                        // Also include leaves from the current key's subtree
+                        uint256_t currentSubtreeStart = currentKey << (256 - depth);
+                        uint256_t currentSubtreeEnd = (currentKey + 1) << (256 - depth);
+                        for (auto leafIt = leaves_.lower_bound(currentSubtreeStart); 
+                             leafIt != leaves_.end() && leafIt->first < currentSubtreeEnd; 
+                             ++leafIt) {
+                            processed[leafIt->first] = leafIt->second;
+                        }
                     }
                     
-                    // Calculate the hash for this subtree
-                    std::map<uint256_t, ByteVector> processed = siblingSubtree;
+                    // Process up to the current depth
+                    std::map<uint256_t, ByteVector> current_processed = processed;
                     for (int i = 0; i < depth; i++) {
-                        processed = create_depth(processed, i);
+                        current_processed = create_depth(current_processed, i);
                     }
                     
                     // The hash should be at the sibling key shifted right by the depth
-                    uint256_t processedKey = siblingKey >> (depth - 1);
-                    auto processedIt = processed.find(processedKey);
-                    if (processedIt != processed.end()) {
+                    uint256_t processedKey = siblingKey >> depth;
+                    auto processedIt = current_processed.find(processedKey);
+                    if (processedIt != current_processed.end()) {
                         siblingHash = processedIt->second;
                     } else {
                         // If we couldn't calculate it, use the zero hash
@@ -242,8 +258,6 @@ public:
         leaves_.clear();
         root_ = ZERO_HASHES[256];
     }
-
-
 
     bool validateProof(const uint256_t& key, const ByteVector& value, const MerkleProof& proof) const {
         if (!proof.isValid() || proof.size() != 256) {

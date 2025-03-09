@@ -40,19 +40,22 @@ BOOST_FIXTURE_TEST_CASE(test_proof_single_leaf, SmtProofFixture) {
 }
 
 BOOST_FIXTURE_TEST_CASE(test_proof_multiple_leaves, SmtProofFixture) {
-    // Add several leaves
-    uint256_t key1 = 1;
+    uint256_t key1 = 133713371337;
     uint256_t key2 = 999;
     ByteVector value1{0x01, 0x01, 0x01};
     ByteVector value2{0x02, 0x02, 0x02};
     
+    // Set the first leaf and test a proof
     smt.setLeaf(key1, value1);
-    smt.setLeaf(key2, value2);
-    
-    // Generate and validate proof for key1
     MerkleProof proof1 = smt.generateProof(key1);
     bool validation1 = smt.validateProof(key1, value1, proof1);
     BOOST_TEST(validation1);
+
+    // Set the second leaf and check the proof again
+    smt.setLeaf(key2, value2);
+    proof1 = smt.generateProof(key1);
+    bool validation1_retest = smt.validateProof(key1, value1, proof1);
+    BOOST_TEST(validation1_retest);
     
     // Generate and validate proof for key2
     MerkleProof proof2 = smt.generateProof(key2);
@@ -88,6 +91,43 @@ BOOST_FIXTURE_TEST_CASE(test_proof_null_hash_at_index_zero, SmtProofFixture) {
     // Verify that the proof validates correctly with the null hash
     bool validationResult = smt.validateProof(key, nullHash, proof);
     BOOST_TEST(validationResult);
+}
+
+BOOST_FIXTURE_TEST_CASE(test_proof_batch_leaves, SmtProofFixture) {
+    uint256_t key1 = 0;
+    uint256_t key2 = 2;
+    ByteVector value1{0x01, 0x01, 0x01};
+    ByteVector value2{0x02, 0x02, 0x02};
+    
+    // Set both leaves using batch update
+    std::vector<std::pair<uint256_t, ByteVector>> updates = {
+        {key1, value1},
+        {key2, value2}
+    };
+    smt.setBatchLeaves(updates);
+    
+    // Generate and validate proof for key1
+    MerkleProof proof1 = smt.generateProof(key1);
+    bool validation1 = smt.validateProof(key1, value1, proof1);
+    BOOST_TEST(validation1);
+    
+    // Generate and validate proof for key2
+    MerkleProof proof2 = smt.generateProof(key2);
+    bool validation2 = smt.validateProof(key2, value2, proof2);
+    BOOST_TEST(validation2);
+    
+    // Cross-validation tests
+    bool crossValidation1 = smt.validateProof(key1, value2, proof1);
+    BOOST_TEST(!crossValidation1);
+    
+    bool crossValidation2 = smt.validateProof(key2, value1, proof2);
+    BOOST_TEST(!crossValidation2);
+    
+    bool crossValidation3 = smt.validateProof(key2, value2, proof1);
+    BOOST_TEST(!crossValidation3);
+    
+    bool crossValidation4 = smt.validateProof(key1, value1, proof2);
+    BOOST_TEST(!crossValidation4);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
