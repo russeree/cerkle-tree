@@ -4,6 +4,8 @@
 #include "hash_function.h"
 #include "hash_sha256.h"
 #include "proof.h"
+#include <iostream>
+#include <format>
 #include <vector>
 #include <bitset>
 #include <map>
@@ -170,10 +172,9 @@ public:
         
         // For each level from leaf to root
         for (int depth = 0; depth < 256; depth++) {
+            std::cout << std::format("Generating a proof at depth: {}", depth) << std::endl;
             // Get the sibling key by flipping the last bit
             uint256_t siblingKey = getPairedNode(currentKey);
-            
-            // Calculate the sibling hash
             ByteVector siblingHash;
             
             // If we're at the leaf level (depth 0)
