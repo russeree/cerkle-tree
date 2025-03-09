@@ -111,7 +111,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_null_hash_at_index_zero, SmtProofFixture) {
 
 BOOST_FIXTURE_TEST_CASE(test_proof_performance_with_random_values, SmtProofFixture) {
     std::cout << "Starting test_proof_performance_with_random_values" << std::endl;
-    const size_t TEST_LEAVES_COUNT = 2;
+    const size_t TEST_LEAVES_COUNT = 1000;
     
     // Vector to store the key-value pairs for testing
     std::vector<std::pair<uint256_t, ByteVector>> test_leaves;
@@ -128,6 +128,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_performance_with_random_values, SmtProofFixtu
     std::cout << "Generating " << TEST_LEAVES_COUNT << " random leaves and adding to SMT..." << std::endl;
     auto start_insertion = std::chrono::high_resolution_clock::now();
     
+    // Generate all leaves first
     for (size_t i = 0; i < TEST_LEAVES_COUNT; i++) {
         // Generate random key (using only 64 bits for simplicity)
         uint256_t key = key_dist(gen);
@@ -140,17 +141,15 @@ BOOST_FIXTURE_TEST_CASE(test_proof_performance_with_random_values, SmtProofFixtu
             value.push_back(byte_dist(gen));
         }
         
-        // Add to SMT
-        smt.setLeaf(key, value);
-        
-        // Store for later verification
+        // Store for later insertion and verification
         test_leaves.emplace_back(key, value);
-        
-        // Log progress every 100 leaves
-        if (i % 100 == 0 && i > 0) {
-            std::cout << "  Added " << i << " leaves so far..." << std::endl;
-        }
     }
+    
+    // Use batch insert instead of individual inserts
+    smt.setBatchLeavesValue(test_leaves);
+    
+    // Log the batch insertion
+    std::cout << "  Added " << TEST_LEAVES_COUNT << " leaves using batch insert" << std::endl;
     
     auto end_insertion = std::chrono::high_resolution_clock::now();
     auto insertion_duration = std::chrono::duration_cast<std::chrono::milliseconds>(
