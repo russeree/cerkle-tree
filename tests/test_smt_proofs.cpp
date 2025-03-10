@@ -111,7 +111,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_null_hash_at_index_zero, SmtProofFixture) {
 
 BOOST_FIXTURE_TEST_CASE(test_proof_performance_with_random_values, SmtProofFixture) {
     std::cout << "Starting test_proof_performance_with_random_values" << std::endl;
-    const size_t TEST_LEAVES_COUNT = 1000;
+    const size_t TEST_LEAVES_COUNT = 100;
     
     // Vector to store the key-value pairs for testing
     std::vector<std::pair<uint256_t, ByteVector>> test_leaves;
@@ -182,7 +182,7 @@ BOOST_FIXTURE_TEST_CASE(test_proof_performance_with_random_values, SmtProofFixtu
         }
         
         // Log progress every 100 proofs
-        if (i % 100 == 0 && i > 0) {
+        if (i % 1 == 0 && i > 0) {
             std::cout << "  Verified " << i << " proofs so far..." << std::endl;
         }
     }

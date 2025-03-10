@@ -48,12 +48,10 @@ BOOST_FIXTURE_TEST_CASE(test_zero_hashes, SmtHashFixture) {
 BOOST_FIXTURE_TEST_CASE(test_hash_to_string, SmtHashFixture) {
     std::vector<std::string> errors;
     
-    // Hash to string with a known input
     ByteVector testData{0x01, 0x02, 0x03};
     ByteVector hash = hashFunction.hash(testData);
     std::string hashString = HashFunction::hashToString(hash);
     
-    // Verify the string is valid hex
     if (hashString.length() != 64) {
         errors.push_back("Hash string length is " + std::to_string(hashString.length()) + ", expected 64");
     }
